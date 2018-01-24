@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">ADB Clipboard</string>
+    <string name="explanation">
+        This simple app is for developers only.
+        \n
+        \nIt allows you to read and write the clipboard of the Android device using
+        ADB commands.
+        \nSee also scripts in the Github repository:
+        \ngithub.com/PRosenb/AdbClipboard
+        \n
+        \nNo need to keep this screen open. The app will be started in the background when you execute the ADB command.
+        \n
+        \nRead clipboard:
+        \nadb shell am broadcast -n \"ch.pete.adbclipboard/.ReadReceiver\"
+        \n
+        \nIt returns the content of the clipboard in the "data" element.
+        \n
+        \nWrite clipboard:
+        \nadb shell am broadcast -n \"ch.pete.adbclipboard/.WriteReceiver\" -e text \"urlEncodedString\"
+        \n
+        \nIf you use spaces, the string needs to be url encoded.
+     </string>
+</resources>
