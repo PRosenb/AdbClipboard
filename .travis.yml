@@ -32,7 +32,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-- "./gradlew clean connectedAndroidTest -PdisablePreDex --stacktrace"
+- "./gradlew clean lint connectedAndroidTest -PdisablePreDex --stacktrace"
 
 notifications:
   email: true
