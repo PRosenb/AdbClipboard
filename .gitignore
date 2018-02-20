@@ -8,3 +8,4 @@
 /app/build
 /captures
 .externalNativeBuild
+keystoreAdbClipboard

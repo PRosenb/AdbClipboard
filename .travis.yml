@@ -19,6 +19,7 @@ env:
     - ADB_INSTALL_TIMEOUT=8
 
 before_install:
+- openssl aes-256-cbc -K $encrypted_7915ebf78935_key -iv $encrypted_7915ebf78935_iv -in keystoreAdbClipboard.enc -out keystoreAdbClipboard -d
 - chmod +x gradlew
 # workaround for travis bug
 - yes | sdkmanager "platforms;android-27"
@@ -32,7 +33,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-- "./gradlew clean lint connectedAndroidTest -PdisablePreDex --stacktrace"
+- "./gradlew clean build check connectedCheck -PdisablePreDex --stacktrace"
 
 notifications:
   email: true
@@ -46,3 +47,14 @@ cache:
   - "$HOME/.gradle"
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
+
+deploy:
+  provider: releases
+  file_glob: true
+  file: "app/build/outputs/apk/release/AdbClipboard-*.apk"
+  skip_cleanup: true
+  on:
+    repo: PRosenb/AdbClipboard
+    tags: true
+  api_key:
+    secure: h5YOaqMClPuPWUMb05IoOJn1OxCW8Pg5EkUK3ZBwrx62WbxEVPution9js2tHo3DTmvvTNWDAFRYYtGqwM4M9LYGwnmeAs5Mi2qvw6nBB8cAUPKqT1aHlGB+4xCbIbjKMtsHFgPSHqjjMqqY+mIbwKQdNTobuUoHtccwpPhCIkCLNrW/a3M0XOKkEj4AAa76UANB8p1XqKQVPC/EGNcRBBnTUuSVOSMR76kmklsXdiSUBw9vr35DBYJAdnGMmYt9f9fGySLP+88vi/PdZgaqSG7YSKTcKCH5J1CcETIltHhMXLDSzFqkEZ93x2EiZVQGd7YqOgP9OHePv/oQdcsOzXKZ+X90p57iC+ydQxOfB1E7jGTaneRBY8wWwlJjdnDx81N7Uq6nDQFKIWYmRHtQBCum4ma7ZLqCWR4H1v5BehU1rFMNdCAhqQ+S9YX2n3cnraXv7Sm1Ql1r1UDMqZAb6Z6K2lo2o/9EdzfnACYhua/g4noh+XUNzgYWJLSB+5mvhUbC3TUyN4p9CM0T6OQ4oSClUPzLn13nH8SWiivqckANksYR4Ds8eaIV9nc//JL4mVBppi/92NKJ0o/GmctXBDyuVpvnSPrmWwjxcskWwAmWSMEX3yMjCh65onZa1ZqK1FTPyVCQxvlSuiLJkeG0bBE7NG5pzmrUEtC4vfHe1Wk=
