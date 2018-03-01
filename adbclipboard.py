@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import urllib
 import subprocess
@@ -92,8 +93,7 @@ def writeToDevice(deviceHash, urlEncodedString):
     if verbose is True:
         print("write device response from {0}:\n{1}".format(
             deviceHash, resultString))
-    response = parseResponse(resultString)
-    return response.status is -1
+    return parseResponse(resultString)
 
 
 def readFromDevice(deviceHash):
@@ -108,11 +108,7 @@ def readFromDevice(deviceHash):
     if verbose is True:
         print("read device response from {0}:\n{1}"
               .format(deviceHash, resultString))
-    response = parseResponse(resultString)
-    if response.status == -1:
-        return response.data
-    else:
-        return None
+    return parseResponse(resultString)
 
 
 class Response(object):
@@ -126,10 +122,11 @@ def parseResponse(resultString):
     response = Response()
     if resultMatch and resultMatch.groups > 0:
         if len(resultMatch.group(1)) == 0:
-            print("error: " + resultMatch.group(2))
+            print("error: " + resultMatch.group(1))
         response.status = int(resultMatch.group(1))
         if response.status == -1:
-            dataMatcher = re.compile("^.*\n.*data=\"(.*)\"$")
+            # re.DOTALL to match newline as well
+            dataMatcher = re.compile("^.*\n.*data=\"(.*)\"$", re.DOTALL)
             dataMatch = dataMatcher.match(resultString)
             if dataMatch and dataMatch.groups > 0:
                 response.data = dataMatch.group(1)
@@ -141,10 +138,13 @@ def syncWithDevices(clipboardHandler):
     while True:
         deviceHashes = getConnectedDeviceHashes()
 
+        hasDeviceWithAdbClipboardInstalled = False
         hasUpdateFromDevice = False
         if (len(deviceHashes) == 0):
             # no devices connected, sleep longer
-            time.sleep(NoconnectedDeviceDelay)
+            print("No device connected, sleep for {0}s"
+                  .format(noConnectedDeviceDelay))
+            time.sleep(noConnectedDeviceDelay)
         else:
             clipboardString = clipboardHandler.readClipboard()
             if previousClipboardString != clipboardString:
@@ -153,18 +153,22 @@ def syncWithDevices(clipboardHandler):
                 if len(clipboardString) > 0:
                     urlEncodedString = urlEncode(clipboardString)
                     for deviceHash in deviceHashes:
-                        writeSuccessful = writeToDevice(
+                        response = writeToDevice(
                             deviceHash, urlEncodedString)
                         printedStatus = ""
-                        if writeSuccessful is False:
+                        if response.status is -1:
+                            hasDeviceWithAdbClipboardInstalled = True
+                        else:
                             printedStatus = " (failed)"
                         print("send to {0}: \"{1}\"{2}".format(
                             deviceHash, clipboardString, printedStatus))
             else:
                 for deviceHash in deviceHashes:
-                    deviceClipboardText = readFromDevice(deviceHash)
-                    # ignore empty strings
-                    if deviceClipboardText is not None:
+                    response = readFromDevice(deviceHash)
+                    if response.status == -1:
+                        hasDeviceWithAdbClipboardInstalled = True
+                        deviceClipboardText = response.data
+
                         if len(clipboardString) == 0 or \
                                 deviceClipboardText != clipboardString:
                             print("recv from {0}: \"{1}\"".format(
@@ -177,7 +181,11 @@ def syncWithDevices(clipboardHandler):
                                     deviceClipboardText)
                                 hasUpdateFromDevice = True
                                 break
-            if hasUpdateFromDevice is False:
+            if hasDeviceWithAdbClipboardInstalled is False:
+                print("No device with installed AdbClipboard, sleep for {0}s"
+                      .format(noConnectedDeviceDelay))
+                time.sleep(noConnectedDeviceDelay)
+            elif hasUpdateFromDevice is False:
                 time.sleep(connectedDevicesDelay)
 
 
