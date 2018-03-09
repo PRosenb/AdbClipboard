@@ -144,6 +144,7 @@ def syncWithDevices(clipboardHandler):
             # no devices connected, sleep longer
             print("No device connected, sleep for {0}s"
                   .format(noConnectedDeviceDelay))
+            previousClipboardString = None
             time.sleep(noConnectedDeviceDelay)
         else:
             clipboardString = clipboardHandler.readClipboard()
@@ -184,6 +185,7 @@ def syncWithDevices(clipboardHandler):
             if hasDeviceWithAdbClipboardInstalled is False:
                 print("No device with installed AdbClipboard, sleep for {0}s"
                       .format(noConnectedDeviceDelay))
+                previousClipboardString = None
                 time.sleep(noConnectedDeviceDelay)
             elif hasUpdateFromDevice is False:
                 time.sleep(connectedDevicesDelay)

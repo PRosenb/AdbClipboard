@@ -21,7 +21,7 @@ The app will be published on Google Play and needs to be built yourself until th
 - This will result in a folder containing all the files for the library. The folder name includes the version: **AdbClipboard-x.y.z**
 
 #### Mac/Linux ####
-   - Copy the file adbclipboard.py to e.g. your root directory:
+   - Copy the file adbclipboard.py to e.g. your home directory:
 ```bash
 cp ./adbclipboard.py ~/
 ```
