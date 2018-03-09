@@ -12,8 +12,8 @@ AdbClipboard is a small app on your smartphone that allows you to read/write the
 ## Installation ##
 There are two parts to install: The app on your test phones and the python script on your development PC.
 
-### AdbClipboard app ###
-The app will be published on Google Play and needs to be built yourself until then.
+### Adb Clipboard app ###
+The app [Adb Clipboard](https://play.google.com/store/apps/details?id=ch.pete.adbclipboard) can be downloaded directly from Google Play.
 
 ### Python script ###
 - [Download the latest version](https://github.com/PRosenb/AdbClipboard/releases/latest)
