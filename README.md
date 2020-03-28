@@ -8,6 +8,7 @@ AdbClipboard is a small app on your smartphone that allows you to read/write the
 - Very small app
 - Does not request any permissions
 - Python script on your PC to communicate with the app over adb (USB cable or Wifi for rooted devices)
+- **Works until Android 9.** On Android 10, apps [cannot access the clipboard](https://developer.android.com/about/versions/10/privacy/changes#clipboard-data) anymore when being in the background.
 
 ## Installation ##
 There are two parts to install: The app on your test phones and the python script on your development PC.
