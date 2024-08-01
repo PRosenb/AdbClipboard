@@ -1,18 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="ch.pete.adbclipboard">
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.READ_LOGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:allowBackup="true"
-        android:fullBackupContent="@xml/backup_descriptor"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
+        <service
+            android:name=".LogcatMonitoringService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name"
+            android:exported="true"
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,6 +37,6 @@
             android:name=".WriteReceiver"
             android:exported="true"
             tools:ignore="ExportedReceiver" />
-
     </application>
+
 </manifest>

@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/AdbClipboard.iml" filepath="$PROJECT_DIR$/AdbClipboard.iml" group="AdbClipboard" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="AdbClipboard/app" />
+      <module fileurl="file://$PROJECT_DIR$/AdbClipboard.iml" filepath="$PROJECT_DIR$/AdbClipboard.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AdbClipboard.app.unitTest.iml" />
     </modules>
   </component>
 </project>

@@ -1,7 +1,11 @@
 package ch.pete.adbclipboard
 
 import android.app.Activity
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.media.RingtoneManager
 import android.text.TextUtils
 import timber.log.Timber
@@ -44,7 +48,7 @@ class WriteReceiver : BroadcastReceiver() {
                     || existingClip.getItemAt(0).text != text) {
 
                 val clip = ClipData.newPlainText(text, text)
-                clipboardManager.primaryClip = clip
+                clipboardManager.setPrimaryClip(clip)
 
                 // play notification tone
                 val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)

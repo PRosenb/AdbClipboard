@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 
+
 /*
  * Receives the implicit broadcast and reads the clipboard
  */
@@ -16,6 +17,8 @@ class ReadReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        context.startService(Intent(context, LogcatMonitoringService::class.java))
+
         val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = clipboardManager.primaryClip
         if (clip != null && clip.itemCount > 0 && clip.getItemAt(0).text != null) {
