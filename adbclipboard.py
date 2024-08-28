@@ -1,13 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import urllib
+import argparse
+import platform
+import re
 import subprocess
 import time
-import re
-import platform
-import argparse
-
+from urllib import parse
 
 # Constants
 CONNECTED_DEVICES_DELAY_DEFAULT = 5
@@ -63,7 +62,7 @@ def checkAdbDependency():
 
 def getConnectedDeviceHashes():
     adbProcess = subprocess.Popen(['adb', 'devices'], stdout=subprocess.PIPE)
-    adbDevicesOutput = adbProcess.communicate()[0]
+    adbDevicesOutput = adbProcess.communicate()[0].decode("utf-8")
     adbDevicesOutputLines = adbDevicesOutput.splitlines()
 
     # remove first line that contains a description
@@ -77,7 +76,7 @@ def getConnectedDeviceHashes():
 
 
 def urlEncode(unencodedString):
-    return urllib.quote_plus(unencodedString)
+    return parse.quote_plus(unencodedString)
 
 
 def writeToDevice(deviceHash, urlEncodedString):
@@ -89,7 +88,7 @@ def writeToDevice(deviceHash, urlEncodedString):
             '-n', 'ch.pete.adbclipboard/.WriteReceiver',
             '-e', 'text', urlEncodedString],
         stdout=subprocess.PIPE)
-    resultString = adbProcess.communicate()[0]
+    resultString = adbProcess.communicate()[0].decode("utf-8")
     if verbose is True:
         print("write device response from {0}:\n{1}".format(
             deviceHash, resultString))
@@ -104,7 +103,7 @@ def readFromDevice(deviceHash):
             'broadcast',
             '-n', 'ch.pete.adbclipboard/.ReadReceiver'],
         stdout=subprocess.PIPE)
-    resultString = adbProcess.communicate()[0]
+    resultString = adbProcess.communicate()[0].decode("utf-8")
     if verbose is True:
         print("read device response from {0}:\n{1}"
               .format(deviceHash, resultString))
@@ -120,7 +119,7 @@ def parseResponse(resultString):
     resultMatcher = re.compile("^.*\n.*result=([\-]{0,1}[0-9]*).*")
     resultMatch = resultMatcher.match(resultString)
     response = Response()
-    if resultMatch and resultMatch.groups > 0:
+    if resultMatch and len(resultMatch.groups()) > 0:
         if len(resultMatch.group(1)) == 0:
             print("error: " + resultMatch.group(1))
         response.status = int(resultMatch.group(1))
@@ -128,7 +127,7 @@ def parseResponse(resultString):
             # re.DOTALL to match newline as well
             dataMatcher = re.compile("^.*\n.*data=\"(.*)\"$", re.DOTALL)
             dataMatch = dataMatcher.match(resultString)
-            if dataMatch and dataMatch.groups > 0:
+            if dataMatch and len(dataMatch.groups()) > 0:
                 response.data = dataMatch.group(1)
     return response
 
@@ -147,7 +146,7 @@ def syncWithDevices(clipboardHandler):
             previousClipboardString = None
             time.sleep(noConnectedDeviceDelay)
         else:
-            clipboardString = clipboardHandler.readClipboard()
+            clipboardString = clipboardHandler.readClipboard().decode("utf-8")
             if previousClipboardString != clipboardString:
                 previousClipboardString = clipboardString
 
@@ -157,7 +156,7 @@ def syncWithDevices(clipboardHandler):
                         response = writeToDevice(
                             deviceHash, urlEncodedString)
                         printedStatus = ""
-                        if response.status is -1:
+                        if response.status == -1:
                             hasDeviceWithAdbClipboardInstalled = True
                         else:
                             printedStatus = " (failed)"
@@ -179,7 +178,7 @@ def syncWithDevices(clipboardHandler):
                                     print("write to clipboard: {0}".format(
                                         deviceClipboardText))
                                 clipboardHandler.writeClipboard(
-                                    deviceClipboardText)
+                                    deviceClipboardText.encode("utf-8"))
                                 hasUpdateFromDevice = True
                                 break
             if hasDeviceWithAdbClipboardInstalled is False:
