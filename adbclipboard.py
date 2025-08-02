@@ -84,8 +84,9 @@ def writeToDevice(deviceHash, urlEncodedString):
         ['adb',
             '-s', deviceHash,
             'shell', 'am',
-            'broadcast',
-            '-n', 'ch.pete.adbclipboard/.WriteReceiver',
+         'start',
+         '-a', 'ch.pete.adbclipboard.WRITE',
+         '-n', 'ch.pete.adbclipboard/.MainActivity',
             '-e', 'text', urlEncodedString],
         stdout=subprocess.PIPE)
     resultString = adbProcess.communicate()[0].decode("utf-8")
@@ -100,14 +101,28 @@ def readFromDevice(deviceHash):
         ['adb',
             '-s', deviceHash,
             'shell', 'am',
-            'broadcast',
-            '-n', 'ch.pete.adbclipboard/.ReadReceiver'],
+         'start',
+         '-a', 'ch.pete.adbclipboard.READ',
+         '-n', 'ch.pete.adbclipboard/.MainActivity'],
         stdout=subprocess.PIPE)
     resultString = adbProcess.communicate()[0].decode("utf-8")
     if verbose is True:
         print("read device response from {0}:\n{1}"
               .format(deviceHash, resultString))
-    return parseResponse(resultString)
+
+    # Wait briefly for file
+    time.sleep(1)
+
+    file_path = "/sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt"
+    adb_process = subprocess.Popen(
+        ['adb', '-s', deviceHash, 'shell', 'cat', file_path],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    file_content, error = adb_process.communicate()
+    file_content = file_content.decode()
+    error = error.decode()
+    print("read file from {0}:\n{1}"
+          .format(deviceHash, file_content))
+    return file_content
 
 
 class Response(object):
@@ -156,6 +171,7 @@ def syncWithDevices(clipboardHandler):
                         response = writeToDevice(
                             deviceHash, urlEncodedString)
                         printedStatus = ""
+                        response.status = -1  # TODO check if device connected and AdbCliboard installed
                         if response.status == -1:
                             hasDeviceWithAdbClipboardInstalled = True
                         else:
@@ -165,9 +181,9 @@ def syncWithDevices(clipboardHandler):
             else:
                 for deviceHash in deviceHashes:
                     response = readFromDevice(deviceHash)
-                    if response.status == -1:
+                    if True:  # TODO check if device connected and AdbCliboard installed
                         hasDeviceWithAdbClipboardInstalled = True
-                        deviceClipboardText = response.data
+                        deviceClipboardText = response
 
                         if len(clipboardString) == 0 or \
                                 deviceClipboardText != clipboardString:
