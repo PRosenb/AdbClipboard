@@ -38,7 +38,7 @@ class MainActivity : Activity() {
             // TODO lower versions?
         }
 
-        handleRequest(false)
+        handleRequest(intent.action == FloatingViewService.ACTION_READ_CLIPBOARD)
     }
 
     override fun onNewIntent(intent: Intent?) {
