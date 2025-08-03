@@ -1,59 +1,124 @@
-# AdbClipboard #
-https://github.com/PRosenb/AdbClipboard
+# AdbClipboard
 
-AdbClipboard is a small app on your smartphone that allows you to read/write the Android clipboard using adb.
+[![GitHub Repository](https://img.shields.io/badge/GitHub-AdbClipboard-blue?logo=github)](https://github.com/PRosenb/AdbClipboard)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Download-green?logo=googleplay)](https://play.google.com/store/apps/details?id=ch.pete.adbclipboard)
 
-## Features ##
-- Easy to use
-- Very small app
-- Does not request any permissions
-- Python script on your PC to communicate with the app over adb (USB cable or Wifi for rooted devices)
-- **Works until Android 9.** On Android 10, apps [cannot access the clipboard](https://developer.android.com/about/versions/10/privacy/changes#clipboard-data) anymore when being in the background.
+AdbClipboard is a lightweight Android application that enables seamless clipboard synchronization
+between your smartphone and PC using ADB (Android Debug Bridge).
 
-## Installation ##
-There are two parts to install: The app on your test phones and the python script on your development PC.
+## Why AdbClipboard?
 
-### Adb Clipboard app ###
-The app [Adb Clipboard](https://play.google.com/store/apps/details?id=ch.pete.adbclipboard) can be downloaded directly from Google Play.
+While there are multiple clipboard sharing solutions that rely on external servers or cloud
+services, developers in restricted environments often find these options blocked. Banks, government
+agencies, and enterprise environments frequently prohibit access to third-party clipboard services
+for security reasons.
 
-### Python script ###
-- [Download the latest version](https://github.com/PRosenb/AdbClipboard/releases/latest)
-- Uncompress the downloaded file
-- This will result in a folder containing all the files for the library. The folder name includes the version: **AdbClipboard-x.y.z**
+AdbClipboard solves this problem by working entirely through your local ADB connection - no external
+servers, no internet dependency, no data leaving your secure network. It's the perfect solution for
+developers who need clipboard sync in security-conscious environments.
 
-#### Mac/Linux ####
-   - Copy the file adbclipboard.py to e.g. your home directory:
+## Features
+
+✨ **Simple & Lightweight** - Minimal footprint with a simple interface  
+🔄 **Bidirectional Sync** - Copy content between Android and PC clipboards  
+⚡ **Auto PC-to-Android** - Automatically syncs PC clipboard changes to your device  
+🎯 **Manual Android-to-PC** - Tap the floating window to sync Android clipboard to PC  
+📱 **Overlay Permission** - Uses display overlay to access clipboard when needed  
+🌐 **Multiple Connections** - Supports both USB and WiFi connections
+
+## How It Works
+
+AdbClipboard uses a Python script on your PC to facilitate clipboard synchronization between your
+computer and Android device through ADB.
+
+**PC → Android (Automatic)**: When your PC clipboard changes, the content is automatically pushed to
+your Android device's clipboard.
+
+**Android → PC (Manual)**: Due to Android's security restrictions, you need to tap the AdbClipboard
+floating window to read the Android clipboard and transfer it to your PC.
+
+### Android Clipboard Restrictions
+
+Android enforces strict limitations on clipboard access for security reasons. Apps can only read the
+clipboard when displaying a visible interface - background services and floating windows alone are
+insufficient. AdbClipboard works around this by providing a floating window that, when tapped,
+briefly activates the app to read the clipboard before closing automatically.
+
+## Installation
+
+The setup requires installing both the Android app and the Python script on your development
+machine.
+
+### Android App Installation
+
+Download and install
+the [AdbClipboard app](https://play.google.com/store/apps/details?id=ch.pete.adbclipboard) from
+Google Play Store.
+
+**Required Permissions:**
+
+- Display over other apps (for floating window)
+- ADB debugging enabled on your device
+
+### Python Script Setup
+
+1. **Download**: Get the [latest release](https://github.com/PRosenb/AdbClipboard/releases/latest)
+2. **Extract**: Uncompress the downloaded file to get the **AdbClipboard-x.y.z** folder
+
+#### macOS/Linux Setup
+
 ```bash
+# Copy the script to your home directory
 cp ./adbclipboard.py ~/
-```
-   - make adbclipboard.py executable
-```bash
-cd
-chmod +x ./adbclipboard.py
-```
-   - Start adbclipboard.py
-```bash
-cd
-./adbclipboard.py
+
+# Make the script executable
+chmod +x ~/adbclipboard.py
+
+# Run the script
+~/adbclipboard.py
 ```
 
-## Contributions ##
-Enhancements and improvements are welcome.
+### Prerequisites
 
-## License ##
-```
-AdbClipboard
-Copyright (c) 2018 Peter Rosenberg (https://github.com/PRosenb).
+- **ADB Tools**: Ensure Android Debug Bridge is installed and accessible
+- **Python 3.x**: Required to run the synchronization script
+- **USB Debugging**: Must be enabled on your Android device
+- **Device Authorization**: Accept the ADB debugging prompt on your device
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+## Usage
 
-http://www.apache.org/licenses/LICENSE-2.0
+1. Connect your Android device via USB or WiFi ADB
+2. Launch the Python script on your PC
+3. Enable the floating window permission for AdbClipboard (if not already enabled)
+4. Start the AdbClipboard app to display the floating window
+5. Copy text on your PC - it automatically appears on Android
+6. To copy from Android to PC, tap the AdbClipboard floating window
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+## Troubleshooting
+
+**Script not connecting?**
+
+- Verify ADB is installed and in your PATH
+- Check USB debugging is enabled
+- Ensure device is authorized for debugging
+
+**Floating window not appearing?**
+
+- Grant "Display over other apps" permission in Android settings
+- Restart the AdbClipboard app after granting permission
+
+## Contributions
+
+We welcome contributions! Whether it's bug fixes, feature enhancements, or documentation
+improvements, your input helps make AdbClipboard better for everyone.
+
+**Ways to contribute:**
+
+- Report issues and bugs
+- Create pull requests
+- Improve documentation
+- Share usage tips and tricks
+
+---
+
+*Made with ❤️ for developers who need seamless clipboard sync between Android and PC*
