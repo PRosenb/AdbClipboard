@@ -84,9 +84,8 @@ def writeToDevice(deviceHash, urlEncodedString):
         ['adb',
             '-s', deviceHash,
             'shell', 'am',
-         'start',
-         '-a', 'ch.pete.adbclipboard.WRITE',
-         '-n', 'ch.pete.adbclipboard/.MainActivity',
+         'broadcast',
+         '-n', 'ch.pete.adbclipboard/.WriteReceiver',
             '-e', 'text', urlEncodedString],
         stdout=subprocess.PIPE)
     resultString = adbProcess.communicate()[0].decode("utf-8")
@@ -97,21 +96,21 @@ def writeToDevice(deviceHash, urlEncodedString):
 
 
 def readFromDevice(deviceHash):
-    adbProcess = subprocess.Popen(
-        ['adb',
-            '-s', deviceHash,
-            'shell', 'am',
-         'start',
-         '-a', 'ch.pete.adbclipboard.READ',
-         '-n', 'ch.pete.adbclipboard/.MainActivity'],
-        stdout=subprocess.PIPE)
-    resultString = adbProcess.communicate()[0].decode("utf-8")
-    if verbose is True:
-        print("read device response from {0}:\n{1}"
-              .format(deviceHash, resultString))
-
-    # Wait briefly for file
-    time.sleep(1)
+    # adbProcess = subprocess.Popen(
+    #     ['adb',
+    #         '-s', deviceHash,
+    #         'shell', 'am',
+    #      'start',
+    #      '-a', 'ch.pete.adbclipboard.READ',
+    #      '-n', 'ch.pete.adbclipboard/.MainActivity'],
+    #     stdout=subprocess.PIPE)
+    # resultString = adbProcess.communicate()[0].decode("utf-8")
+    # if verbose is True:
+    #     print("read device response from {0}:\n{1}"
+    #           .format(deviceHash, resultString))
+    #
+    # # Wait briefly for file
+    # time.sleep(1)
 
     file_path = "/sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt"
     adb_process = subprocess.Popen(

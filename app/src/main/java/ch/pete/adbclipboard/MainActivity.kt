@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import timber.log.Timber
 import java.io.File
@@ -18,6 +21,22 @@ class MainActivity : Activity() {
         Timber.plant(Timber.DebugTree())
 
         setContentView(R.layout.main_activity)
+
+        // Check if permission is granted
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION)
+            }
+            if (Settings.canDrawOverlays(this)) {
+                val intent = Intent(this, FloatingViewService::class.java)
+                startForegroundService(intent) // Use foreground service for better reliability
+            }
+        }
+
 
         handleRequest(intent)
     }
@@ -86,5 +105,6 @@ class MainActivity : Activity() {
         private const val TAG = "AdbClipboard"
         private const val ACTION_WRITE = "ch.pete.adbclipboard.WRITE"
         private const val ACTION_READ = "ch.pete.adbclipboard.READ"
+        private const val REQUEST_OVERLAY_PERMISSION = 1
     }
 }
