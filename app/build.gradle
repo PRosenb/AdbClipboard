@@ -9,8 +9,8 @@ android {
         namespace "ch.pete.adbclipboard"
         minSdkVersion 26
         targetSdk 36
-        versionCode 3
-        versionName "2.0"
+        versionCode 4
+        versionName "3.0"
         setProperty("archivesBaseName", "AdbClipboard-${versionName}_${versionCode}")
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
