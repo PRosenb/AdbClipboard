@@ -1,9 +1,9 @@
 package ch.pete.adbclipboard
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -17,38 +17,35 @@ class FloatingViewService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    @SuppressLint("InflateParams")
     override fun onCreate() {
         super.onCreate()
 
-        // Create the floating view
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget, null)
 
         // Set up window parameters
-        val params = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            )
-        } else {
-            TODO("VERSION.SDK_INT < O")
-        }
-
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        )
         params.gravity = Gravity.TOP or Gravity.START
         params.x = 0
         params.y = 100
 
         // Add view to window manager
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        windowManager = getSystemService(WindowManager::class.java)
         windowManager.addView(floatingView, params)
 
-        // Make it draggable
-        makeDraggable(floatingView, params)
+        makeDraggableAndStartActivityOnTouch(floatingView, params)
     }
 
-    private fun makeDraggable(view: View, params: WindowManager.LayoutParams) {
+    private fun makeDraggableAndStartActivityOnTouch(
+        view: View,
+        params: WindowManager.LayoutParams
+    ) {
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
@@ -58,6 +55,7 @@ class FloatingViewService : Service() {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startClipboardReaderActivity()
+
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = event.rawX

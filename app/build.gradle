@@ -7,7 +7,7 @@ android {
     compileSdk 34
     defaultConfig {
         namespace "ch.pete.adbclipboard"
-        minSdkVersion 16
+        minSdkVersion 26
         targetSdk 34
         versionCode 3
         versionName "2.0"

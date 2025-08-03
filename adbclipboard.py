@@ -122,8 +122,9 @@ def readFromDevice(deviceHash):
                   .format(rm_response, error))
 
     file_content = file_content.decode()
-    print("read file from {0}: {1}"
-          .format(deviceHash, file_content))
+    if file_content != "":
+        print("read from {0}: {1}"
+              .format(deviceHash, file_content))
     response.data = file_content
     return response
 
@@ -178,7 +179,7 @@ def syncWithDevices(clipboardHandler):
                             hasDeviceWithAdbClipboardInstalled = True
                         else:
                             printedStatus = " (failed)"
-                        print("send to {0}: \"{1}\"{2}".format(
+                        print("write to {0}: {1}{2}".format(
                             deviceHash, clipboardString, printedStatus))
             else:
                 for deviceHash in deviceHashes:
