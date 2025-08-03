@@ -92,36 +92,40 @@ def writeToDevice(deviceHash, urlEncodedString):
     if verbose is True:
         print("write device response from {0}:\n{1}".format(
             deviceHash, resultString))
-    return parseResponse(resultString)
+    return parseBroadcastResponse(resultString)
 
 
 def readFromDevice(deviceHash):
-    # adbProcess = subprocess.Popen(
-    #     ['adb',
-    #         '-s', deviceHash,
-    #         'shell', 'am',
-    #      'start',
-    #      '-a', 'ch.pete.adbclipboard.READ',
-    #      '-n', 'ch.pete.adbclipboard/.MainActivity'],
-    #     stdout=subprocess.PIPE)
-    # resultString = adbProcess.communicate()[0].decode("utf-8")
-    # if verbose is True:
-    #     print("read device response from {0}:\n{1}"
-    #           .format(deviceHash, resultString))
-    #
-    # # Wait briefly for file
-    # time.sleep(1)
-
     file_path = "/sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt"
     adb_process = subprocess.Popen(
         ['adb', '-s', deviceHash, 'shell', 'cat', file_path],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     file_content, error = adb_process.communicate()
+    response = Response()
+    if error:
+        resultMatcher = re.compile("^.*No such file or directory\n")
+        if resultMatcher.match(error.decode()):
+            response.status = -1
+            response.data = ""
+        else:
+            print("read file error from {0}:\n{1}"
+                  .format(deviceHash, error))
+            response.status = 1
+    else:
+        response.status = -1
+        adb_process = subprocess.Popen(
+            ['adb', '-s', deviceHash, 'shell', 'rm', file_path],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        rm_response, error = adb_process.communicate()
+        if verbose is True:
+            print("rm response {0}: {1}"
+                  .format(rm_response, error))
+
     file_content = file_content.decode()
-    error = error.decode()
-    print("read file from {0}:\n{1}"
+    print("read file from {0}: {1}"
           .format(deviceHash, file_content))
-    return file_content
+    response.data = file_content
+    return response
 
 
 class Response(object):
@@ -129,7 +133,7 @@ class Response(object):
     data = None
 
 
-def parseResponse(resultString):
+def parseBroadcastResponse(resultString):
     resultMatcher = re.compile("^.*\n.*result=([\-]{0,1}[0-9]*).*")
     resultMatch = resultMatcher.match(resultString)
     response = Response()
@@ -170,7 +174,6 @@ def syncWithDevices(clipboardHandler):
                         response = writeToDevice(
                             deviceHash, urlEncodedString)
                         printedStatus = ""
-                        response.status = -1  # TODO check if device connected and AdbCliboard installed
                         if response.status == -1:
                             hasDeviceWithAdbClipboardInstalled = True
                         else:
@@ -180,22 +183,21 @@ def syncWithDevices(clipboardHandler):
             else:
                 for deviceHash in deviceHashes:
                     response = readFromDevice(deviceHash)
-                    if True:  # TODO check if device connected and AdbCliboard installed
+                    if response.status == -1:
                         hasDeviceWithAdbClipboardInstalled = True
-                        deviceClipboardText = response
+                    deviceClipboardText = response.data
 
-                        if len(clipboardString) == 0 or \
-                                deviceClipboardText != clipboardString:
-                            print("recv from {0}: \"{1}\"".format(
-                                deviceHash, deviceClipboardText))
-                            if deviceClipboardText is not None:
-                                if verbose is True:
-                                    print("write to clipboard: {0}".format(
-                                        deviceClipboardText))
-                                clipboardHandler.writeClipboard(
-                                    deviceClipboardText.encode("utf-8"))
-                                hasUpdateFromDevice = True
-                                break
+                    if len(clipboardString) == 0 or \
+                            deviceClipboardText != clipboardString:
+                        if deviceClipboardText is not None and deviceClipboardText != "":
+                            if verbose is True:
+                                print("write to clipboard: {0}".format(
+                                    deviceClipboardText))
+                            clipboardHandler.writeClipboard(
+                                deviceClipboardText.encode("utf-8"))
+                            hasUpdateFromDevice = True
+                            previousClipboardString = deviceClipboardText
+                            break
             if hasDeviceWithAdbClipboardInstalled is False:
                 print("No device with installed AdbClipboard, sleep for {0}s"
                       .format(noConnectedDeviceDelay))
