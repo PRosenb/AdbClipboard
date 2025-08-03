@@ -32,7 +32,7 @@ class ClipboardReaderActivity : Activity() {
     }
 
     private fun readClipboard() {
-        Timber.d(TAG, "Attempting to read clipboard...")
+        Timber.d("Attempting to read clipboard...")
 
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         val text: String
@@ -40,10 +40,10 @@ class ClipboardReaderActivity : Activity() {
             val clip = clipboard.primaryClip
             val item = clip?.getItemAt(0)
             text = if (item?.text != null) item.text.toString() else ""
-            Timber.d(TAG, "Read clipboard: $text")
+            Timber.d("Read clipboard: $text")
         } else {
             text = ""
-            Timber.e(TAG, "Clipboard is empty or inaccessible")
+            Timber.e("Clipboard is empty or inaccessible")
         }
 
         // Write to file for ADB access
@@ -52,17 +52,15 @@ class ClipboardReaderActivity : Activity() {
             val writer = FileWriter(file)
             writer.write(text)
             writer.close()
-            Timber.d(TAG, "Wrote clipboard to: " + file.absolutePath)
+            Timber.d("Wrote clipboard to: $file.absolutePath")
         } catch (e: IOException) {
-            Timber.e(TAG, "Failed to write to file: " + e.message)
+            Timber.e("Failed to write to file: $e.message")
         }
 
         this.finish()
     }
 
     companion object {
-        private const val TAG = "AdbClipboard"
-
         /**
          * We need to wait a bit for the system to give us access to the clipboard
          */
