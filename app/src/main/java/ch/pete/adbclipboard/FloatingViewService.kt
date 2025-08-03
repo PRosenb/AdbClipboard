@@ -57,7 +57,7 @@ class FloatingViewService : Service() {
         view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    startMainActivity()
+                    startClipboardReaderActivity()
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = event.rawX
@@ -82,10 +82,9 @@ class FloatingViewService : Service() {
         }
     }
 
-    private fun startMainActivity() {
-        val dialogIntent = Intent(this, MainActivity::class.java)
+    private fun startClipboardReaderActivity() {
+        val dialogIntent = Intent(this, ClipboardReaderActivity::class.java)
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        dialogIntent.action = ACTION_READ_CLIPBOARD
         startActivity(dialogIntent)
     }
 
@@ -94,9 +93,5 @@ class FloatingViewService : Service() {
         if (::floatingView.isInitialized) {
             windowManager.removeView(floatingView)
         }
-    }
-
-    companion object {
-        const val ACTION_READ_CLIPBOARD = "ch.pete.adbclipboard.READ_CLIPBOARD"
     }
 }

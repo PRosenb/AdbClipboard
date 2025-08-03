@@ -20,4 +20,5 @@
         \n
         \nIf you use spaces, the string needs to be url encoded.
      </string>
+    <string name="reading_clipboard">Reading clipboard..</string>
 </resources>
