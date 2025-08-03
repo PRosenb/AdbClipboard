@@ -40,7 +40,7 @@ class MainActivity : Activity() {
             findViewById<Button>(R.id.request_permission).visibility = GONE
 
             val intent = Intent(this, FloatingViewService::class.java)
-            startForegroundService(intent) // Use foreground service for better reliability
+            startService(intent)
         } else {
             findViewById<Button>(R.id.request_permission).visibility = VISIBLE
         }
