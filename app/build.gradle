@@ -29,9 +29,6 @@ android {
         sourceCompatibility = '21'
         targetCompatibility = '21'
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_21.toString()
-    }
     buildTypes {
         release {
             minifyEnabled false

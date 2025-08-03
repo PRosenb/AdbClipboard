@@ -39,10 +39,14 @@ class FloatingViewService : Service() {
         windowManager = getSystemService(WindowManager::class.java)
         windowManager.addView(floatingView, params)
 
-        makeDraggableAndStartActivityOnTouch(floatingView, params)
+        makeDraggable(floatingView, params)
+
+        floatingView.setOnClickListener {
+            startClipboardReaderActivity()
+        }
     }
 
-    private fun makeDraggableAndStartActivityOnTouch(
+    private fun makeDraggable(
         view: View,
         params: WindowManager.LayoutParams
     ) {
@@ -54,8 +58,6 @@ class FloatingViewService : Service() {
         view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    startClipboardReaderActivity()
-
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = event.rawX
@@ -81,9 +83,9 @@ class FloatingViewService : Service() {
     }
 
     private fun startClipboardReaderActivity() {
-        val dialogIntent = Intent(this, ClipboardReaderActivity::class.java)
-        dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(dialogIntent)
+        val intent = Intent(this, ClipboardReaderActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
 
     override fun onDestroy() {
