@@ -127,3 +127,23 @@ improvements, your input helps make AdbClipboard better for everyone.
 ---
 
 *Made with ❤️ for developers who need seamless clipboard sync between Android and PC*
+
+## Developer Commands
+
+For developers who want to test or integrate AdbClipboard functionality directly, you can use these
+ADB commands:
+
+### Write to Android
+
+```bash
+adb shell am broadcast -a ch.pete.adbclipboard.WRITE -n ch.pete.adbclipboard/.WriteReceiver -e text "Text for the clipboard"
+```
+
+### Read from Android
+
+```bash
+adb shell cat /sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt
+```
+
+These commands allow you to programmatically interact with AdbClipboard without using the Python
+script, which can be useful for automation or custom integrations.
