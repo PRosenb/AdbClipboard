@@ -18,8 +18,14 @@
 \n
 \n💡 TIP: No need to keep this screen open. The app runs in the background and shows a floating window.
 \n
-\nPerfect for developers in restricted environments where external clipboard services are blocked.</string>
+\nPerfect for developers in restricted environments where external clipboard services are blocked.
+\n
+\n🔧 Buttons explained:
+\n• "Enable overlay permission" - Appears if permission not yet granted. Tap to open Android settings, then find AdbClipboard in the list and toggle the permission on.
+\n• "Hide info" - Closes this screen but keeps the floating window active
+\n• "Exit app" - Completely closes AdbClipboard including the floating window</string>
     <string name="reading_clipboard">Reading clipboard..</string>
-    <string name="close_app">Close app</string>
-    <string name="close_window">Close window</string>
+    <string name="request_permission">Enable overlay permission</string>
+    <string name="close_app">Exit app</string>
+    <string name="close_window">Hide info</string>
 </resources>

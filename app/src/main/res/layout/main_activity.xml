@@ -17,12 +17,20 @@
         android:textIsSelectable="true" />
 
     <Button
-        android:id="@+id/close_window"
+        android:id="@+id/request_permission"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/head"
-        android:layout_alignParentStart="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="@string/request_permission" />
+
+    <Button
+        android:id="@+id/close_window"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/request_permission"
+        android:layout_alignParentStart="true"
         android:layout_marginTop="20dp"
         android:text="@string/close_window" />
 
@@ -30,7 +38,7 @@
         android:id="@+id/close_app"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/head"
+        android:layout_below="@id/request_permission"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="20dp"
         android:text="@string/close_app" />

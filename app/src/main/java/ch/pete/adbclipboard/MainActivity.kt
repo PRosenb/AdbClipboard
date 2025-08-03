@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.Button
 
 class MainActivity : Activity() {
@@ -12,8 +14,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
 
-        // Check if permission is granted
-        if (!Settings.canDrawOverlays(this)) {
+        findViewById<Button>(R.id.request_permission).setOnClickListener {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
@@ -34,9 +35,14 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+
         if (Settings.canDrawOverlays(this)) {
+            findViewById<Button>(R.id.request_permission).visibility = GONE
+
             val intent = Intent(this, FloatingViewService::class.java)
             startForegroundService(intent) // Use foreground service for better reliability
+        } else {
+            findViewById<Button>(R.id.request_permission).visibility = VISIBLE
         }
     }
 
