@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
         namespace "ch.pete.adbclipboard"
         minSdkVersion 26
-        targetSdk 34
+        targetSdk 36
         versionCode 3
         versionName "2.0"
         setProperty("archivesBaseName", "AdbClipboard-${versionName}_${versionCode}")
