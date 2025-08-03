@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Button
 import timber.log.Timber
 
 class MainActivity : Activity() {
@@ -29,6 +30,16 @@ class MainActivity : Activity() {
             }
         } else {
             // TODO lower versions?
+        }
+
+        findViewById<Button>(R.id.close_window).setOnClickListener {
+            finish()
+        }
+
+        findViewById<Button>(R.id.close_app).setOnClickListener {
+            val serviceIntent = Intent(this, FloatingViewService::class.java)
+            stopService(serviceIntent)
+            finish()
         }
     }
 
