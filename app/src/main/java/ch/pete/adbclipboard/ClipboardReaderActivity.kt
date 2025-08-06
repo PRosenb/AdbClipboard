@@ -2,7 +2,6 @@ package ch.pete.adbclipboard
 
 import android.app.Activity
 import android.content.ClipboardManager
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -16,11 +15,6 @@ class ClipboardReaderActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.clipboard_reader_activity)
-        handleReadClipboardRequest()
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
         handleReadClipboardRequest()
     }
 
