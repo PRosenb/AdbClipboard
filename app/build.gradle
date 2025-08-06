@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    compileSdk 36
+    compileSdkVersion 36
     defaultConfig {
         namespace "ch.pete.adbclipboard"
-        minSdkVersion 26
+        minSdkVersion 29
         targetSdk 36
         versionCode 4
         versionName "3.0"
