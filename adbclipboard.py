@@ -39,18 +39,18 @@ def parseArgs():
     if args.connected_devices_delay is not None:
         connectedDevicesDelay = args.connected_devices_delay
     if args.no_connected_device_delay is not None:
-        noConnectedDeviceDelay = args.connected_devices_delay
+        noConnectedDeviceDelay = args.no_connected_device_delay
 
     if verbose is True:
         print("verbose: {0}".format(verbose))
         print("connectedDevicesDelay: {0}".format(connectedDevicesDelay))
         print("noConnectedDeviceDelay: {0}".format(noConnectedDeviceDelay))
-        print
+        print()
 
 
 def checkAdbDependency():
     try:
-        process = subprocess.Popen(['adb'], stdout=subprocess.PIPE)
+        result = subprocess.run(['adb'], capture_output=True, text=True)
         return True
     except OSError as e:
         print("adb not found. Please make sure Android SDK is installed" +
@@ -61,9 +61,8 @@ def checkAdbDependency():
 
 
 def getConnectedDeviceHashes():
-    adbProcess = subprocess.Popen(['adb', 'devices'], stdout=subprocess.PIPE)
-    adbDevicesOutput = adbProcess.communicate()[0].decode("utf-8")
-    adbDevicesOutputLines = adbDevicesOutput.splitlines()
+    result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
+    adbDevicesOutputLines = result.stdout.splitlines()
 
     # remove first line that contains a description
     del adbDevicesOutputLines[0]
@@ -80,48 +79,51 @@ def urlEncode(unencodedString):
 
 
 def writeToDevice(deviceHash, urlEncodedString):
-    adbProcess = subprocess.Popen(
-        ['adb',
-            '-s', deviceHash,
-            'shell', 'am',
-         'broadcast',
-         '-n', 'ch.pete.adbclipboard/.WriteReceiver',
-            '-e', 'text', urlEncodedString],
-        stdout=subprocess.PIPE)
-    resultString = adbProcess.communicate()[0].decode("utf-8")
+    result = subprocess.run([
+        'adb',
+        '-s', deviceHash,
+        'shell', 'am',
+        'broadcast',
+        '-n', 'ch.pete.adbclipboard/.WriteReceiver',
+        '-e', 'text', urlEncodedString
+    ], capture_output=True, text=True)
+    
     if verbose is True:
         print("write device response from {0}:\n{1}".format(
-            deviceHash, resultString))
-    return parseBroadcastResponse(resultString)
+            deviceHash, result.stdout))
+    return parseBroadcastResponse(result.stdout)
 
 
 def readFromDevice(deviceHash):
     file_path = "/sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt"
-    adb_process = subprocess.Popen(
-        ['adb', '-s', deviceHash, 'shell', 'cat', file_path],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    file_content, error = adb_process.communicate()
+
+    # Try to read the file
+    result = subprocess.run([
+        'adb', '-s', deviceHash, 'shell', 'cat', file_path
+    ], capture_output=True, text=True)
+    
     response = Response()
-    if error:
+    if result.stderr:
         resultMatcher = re.compile("^.*No such file or directory\n")
-        if resultMatcher.match(error.decode()):
+        if resultMatcher.match(result.stderr):
             response.status = -1
             response.data = ""
         else:
             print("read file error from {0}:\n{1}"
-                  .format(deviceHash, error))
+                  .format(deviceHash, result.stderr))
             response.status = 1
     else:
         response.status = -1
-        adb_process = subprocess.Popen(
-            ['adb', '-s', deviceHash, 'shell', 'rm', file_path],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        rm_response, error = adb_process.communicate()
+        # Remove the file after reading
+        rm_result = subprocess.run([
+            'adb', '-s', deviceHash, 'shell', 'rm', file_path
+        ], capture_output=True, text=True)
+        
         if verbose is True:
             print("rm response {0}: {1}"
-                  .format(rm_response, error))
+                  .format(rm_result.stdout, rm_result.stderr))
 
-    file_content = file_content.decode()
+    file_content = result.stdout
     if file_content != "":
         print("read from {0}: {1}"
               .format(deviceHash, file_content))
@@ -165,7 +167,7 @@ def syncWithDevices(clipboardHandler):
             previousClipboardString = None
             time.sleep(noConnectedDeviceDelay)
         else:
-            clipboardString = clipboardHandler.readClipboard().decode("utf-8")
+            clipboardString = clipboardHandler.readClipboard()
             if previousClipboardString != clipboardString:
                 previousClipboardString = clipboardString
 
@@ -194,8 +196,7 @@ def syncWithDevices(clipboardHandler):
                             if verbose is True:
                                 print("write to clipboard: {0}".format(
                                     deviceClipboardText))
-                            clipboardHandler.writeClipboard(
-                                deviceClipboardText.encode("utf-8"))
+                            clipboardHandler.writeClipboard(deviceClipboardText)
                             hasUpdateFromDevice = True
                             previousClipboardString = deviceClipboardText
                             break
@@ -214,21 +215,17 @@ class ClipboardHandlerMac(object):
         return True
 
     def readClipboard(self):
-        process = subprocess.Popen(['pbpaste'], stdout=subprocess.PIPE)
-        clipboardText = process.communicate()[0]
-        return clipboardText
+        result = subprocess.run(['pbpaste'], capture_output=True, text=True)
+        return result.stdout
 
     def writeClipboard(self, text):
-        process = subprocess.Popen(['pbcopy'],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        process.communicate(input=text)
+        subprocess.run(['pbcopy'], input=text, text=True)
 
 
 class ClipboardHandlerLinux(object):
     def checkDependencies(self):
         try:
-            process = subprocess.Popen(['xclip'], stdout=subprocess.PIPE)
+            subprocess.run(['xclip'], capture_output=True, text=True)
             return True
         except OSError as e:
             print("xclip not found." +
@@ -239,15 +236,11 @@ class ClipboardHandlerLinux(object):
             return False
 
     def readClipboard(self):
-        process = subprocess.Popen(['xclip'], stdout=subprocess.PIPE)
-        clipboardText = process.communicate()[0]
-        return clipboardText
+        result = subprocess.run(['xclip', '-o'], capture_output=True, text=True)
+        return result.stdout
 
     def writeClipboard(self, text):
-        process = subprocess.Popen(['xclip', '-o'],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        process.communicate(input=text)
+        subprocess.run(['xclip'], input=text, text=True)
 
 
 if platform.system() == "Linux":
