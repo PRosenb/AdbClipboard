@@ -50,28 +50,48 @@ def parseArgs():
 
 def checkAdbDependency():
     try:
-        result = subprocess.run(['adb'], capture_output=True, text=True)
+        result = subprocess.run(['adb'], capture_output=True, text=True, timeout=10)
         return True
-    except OSError as e:
+    except FileNotFoundError:
         print("adb not found. Please make sure Android SDK is installed" +
               " and adb is available on your PATH.")
+        return False
+    except subprocess.TimeoutExpired:
+        print("adb command timed out")
+        return False
+    except Exception as e:
+        print("Error running adb command: {0}".format(e))
         if verbose is True:
             print("error: {0}".format(e))
         return False
 
 
 def getConnectedDeviceHashes():
-    result = subprocess.run(['adb', 'devices'], capture_output=True, text=True)
-    adbDevicesOutputLines = result.stdout.splitlines()
+    try:
+        result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            print("adb devices command failed with return code: {0}".format(result.returncode))
+            if result.stderr:
+                print("Error output: {0}".format(result.stderr))
+            return []
+        
+        adbDevicesOutputLines = result.stdout.splitlines()
 
-    # remove first line that contains a description
-    del adbDevicesOutputLines[0]
+        # remove first line that contains a description
+        if len(adbDevicesOutputLines) > 0:
+            del adbDevicesOutputLines[0]
 
-    deviceHashes = []
-    for deviceLine in adbDevicesOutputLines:
-        if (len(deviceLine) > 0):
-            deviceHashes.append(deviceLine.split('\t')[0])
-    return deviceHashes
+        deviceHashes = []
+        for deviceLine in adbDevicesOutputLines:
+            if (len(deviceLine) > 0):
+                deviceHashes.append(deviceLine.split('\t')[0])
+        return deviceHashes
+    except subprocess.TimeoutExpired:
+        print("adb devices command timed out")
+        return []
+    except Exception as e:
+        print("Error getting connected devices: {0}".format(e))
+        return []
 
 
 def urlEncode(unencodedString):
@@ -79,56 +99,105 @@ def urlEncode(unencodedString):
 
 
 def writeToDevice(deviceHash, urlEncodedString):
-    result = subprocess.run([
-        'adb',
-        '-s', deviceHash,
-        'shell', 'am',
-        'broadcast',
-        '-n', 'ch.pete.adbclipboard/.WriteReceiver',
-        '-e', 'text', urlEncodedString
-    ], capture_output=True, text=True)
+    try:
+        result = subprocess.run([
+            'adb',
+            '-s', deviceHash,
+            'shell', 'am',
+            'broadcast',
+            '-n', 'ch.pete.adbclipboard/.WriteReceiver',
+            '-e', 'text', urlEncodedString
+        ], capture_output=True, text=True, timeout=30)
+        
+        if result.returncode != 0:
+            print("Write command failed for device {0} with return code: {1}".format(
+                deviceHash, result.returncode))
+            if result.stderr:
+                print("Error output: {0}".format(result.stderr))
+            # Return error response
+            response = Response()
+            response.status = 1
+            return response
+        
+        if verbose is True:
+            print("write device response from {0}:\n{1}".format(
+                deviceHash, result.stdout))
+        return parseBroadcastResponse(result.stdout)
     
-    if verbose is True:
-        print("write device response from {0}:\n{1}".format(
-            deviceHash, result.stdout))
-    return parseBroadcastResponse(result.stdout)
+    except subprocess.TimeoutExpired:
+        print("Write command timed out for device {0}".format(deviceHash))
+        response = Response()
+        response.status = 1
+        return response
+    except Exception as e:
+        print("Error writing to device {0}: {1}".format(deviceHash, e))
+        response = Response()
+        response.status = 1
+        return response
 
 
 def readFromDevice(deviceHash):
     file_path = "/sdcard/Android/data/ch.pete.adbclipboard/files/clipboard.txt"
-
-    # Try to read the file
-    result = subprocess.run([
-        'adb', '-s', deviceHash, 'shell', 'cat', file_path
-    ], capture_output=True, text=True)
     
     response = Response()
-    if result.stderr:
-        resultMatcher = re.compile("^.*No such file or directory\n")
-        if resultMatcher.match(result.stderr):
-            response.status = -1
-            response.data = ""
-        else:
-            print("read file error from {0}:\n{1}"
-                  .format(deviceHash, result.stderr))
-            response.status = 1
-    else:
-        response.status = -1
-        # Remove the file after reading
-        rm_result = subprocess.run([
-            'adb', '-s', deviceHash, 'shell', 'rm', file_path
-        ], capture_output=True, text=True)
+    
+    try:
+        # Try to read the file
+        result = subprocess.run([
+            'adb', '-s', deviceHash, 'shell', 'cat', file_path
+        ], capture_output=True, text=True, timeout=30)
         
-        if verbose is True:
-            print("rm response {0}: {1}"
-                  .format(rm_result.stdout, rm_result.stderr))
+        if result.stderr:
+            resultMatcher = re.compile("^.*No such file or directory")
+            if resultMatcher.match(result.stderr):
+                response.status = -1
+                response.data = ""
+                return response
+            else:
+                print("read file error from {0}:\n{1}".format(deviceHash, result.stderr))
+                response.status = 1
+                response.data = ""
+                return response
+        
+        if result.returncode != 0:
+            print("Read command failed for device {0} with return code: {1}".format(
+                deviceHash, result.returncode))
+            response.status = 1
+            response.data = ""
+            return response
+        
+        response.status = -1
+        file_content = result.stdout
+        
+        # Remove the file after reading (only if read was successful)
+        try:
+            rm_result = subprocess.run([
+                'adb', '-s', deviceHash, 'shell', 'rm', file_path
+            ], capture_output=True, text=True, timeout=10)
+            
+            if verbose is True:
+                print("rm response stdout: {0}, stderr: {1}".format(
+                    rm_result.stdout, rm_result.stderr))
+        except subprocess.TimeoutExpired:
+            print("Remove command timed out for device {0}".format(deviceHash))
+        except Exception as e:
+            print("Error removing file from device {0}: {1}".format(deviceHash, e))
 
-    file_content = result.stdout
-    if file_content != "":
-        print("read from {0}: {1}"
-              .format(deviceHash, file_content))
-    response.data = file_content
-    return response
+        if file_content != "":
+            print("read from {0}: {1}".format(deviceHash, file_content))
+        response.data = file_content
+        return response
+        
+    except subprocess.TimeoutExpired:
+        print("Read command timed out for device {0}".format(deviceHash))
+        response.status = 1
+        response.data = ""
+        return response
+    except Exception as e:
+        print("Error reading from device {0}: {1}".format(deviceHash, e))
+        response.status = 1
+        response.data = ""
+        return response
 
 
 class Response(object):
@@ -215,32 +284,85 @@ class ClipboardHandlerMac(object):
         return True
 
     def readClipboard(self):
-        result = subprocess.run(['pbpaste'], capture_output=True, text=True)
-        return result.stdout
+        try:
+            result = subprocess.run(['pbpaste'], capture_output=True, text=True, timeout=10)
+            if result.returncode != 0:
+                print("pbpaste command failed with return code: {0}".format(result.returncode))
+                if result.stderr:
+                    print("Error: {0}".format(result.stderr))
+                return ""
+            return result.stdout
+        except subprocess.TimeoutExpired:
+            print("pbpaste command timed out")
+            return ""
+        except Exception as e:
+            print("Error reading clipboard: {0}".format(e))
+            return ""
 
     def writeClipboard(self, text):
-        subprocess.run(['pbcopy'], input=text, text=True)
+        try:
+            result = subprocess.run(['pbcopy'], input=text, text=True, timeout=10)
+            if result.returncode != 0:
+                print("pbcopy command failed with return code: {0}".format(result.returncode))
+                if result.stderr:
+                    print("Error: {0}".format(result.stderr))
+        except subprocess.TimeoutExpired:
+            print("pbcopy command timed out")
+        except Exception as e:
+            print("Error writing to clipboard: {0}".format(e))
 
 
 class ClipboardHandlerLinux(object):
     def checkDependencies(self):
         try:
-            subprocess.run(['xclip'], capture_output=True, text=True)
+            result = subprocess.run(['xclip', '-version'], capture_output=True, text=True, timeout=10)
+            if result.returncode != 0:
+                print("xclip not found or not working properly." +
+                      " Please install it with your package manager.")
+                print("e.g. sudo apt install xclip")
+                return False
             return True
-        except OSError as e:
+        except FileNotFoundError:
             print("xclip not found." +
                   " Please install it with your package manager.")
             print("e.g. sudo apt install xclip")
+            return False
+        except subprocess.TimeoutExpired:
+            print("xclip command timed out")
+            return False
+        except Exception as e:
+            print("Error checking xclip: {0}".format(e))
             if verbose is True:
                 print("error: {0}".format(e))
             return False
 
     def readClipboard(self):
-        result = subprocess.run(['xclip', '-o'], capture_output=True, text=True)
-        return result.stdout
+        try:
+            result = subprocess.run(['xclip', '-o'], capture_output=True, text=True, timeout=10)
+            if result.returncode != 0:
+                print("xclip read command failed with return code: {0}".format(result.returncode))
+                if result.stderr:
+                    print("Error: {0}".format(result.stderr))
+                return ""
+            return result.stdout
+        except subprocess.TimeoutExpired:
+            print("xclip read command timed out")
+            return ""
+        except Exception as e:
+            print("Error reading clipboard: {0}".format(e))
+            return ""
 
     def writeClipboard(self, text):
-        subprocess.run(['xclip'], input=text, text=True)
+        try:
+            result = subprocess.run(['xclip'], input=text, text=True, timeout=10)
+            if result.returncode != 0:
+                print("xclip write command failed with return code: {0}".format(result.returncode))
+                if result.stderr:
+                    print("Error: {0}".format(result.stderr))
+        except subprocess.TimeoutExpired:
+            print("xclip write command timed out")
+        except Exception as e:
+            print("Error writing to clipboard: {0}".format(e))
 
 
 if platform.system() == "Linux":

@@ -1,0 +1,35 @@
+**📱 Secure Clipboard Sync for Developers**
+
+AdbClipboard enables seamless clipboard synchronization between your Android device and development PC through ADB - no external servers, no internet required, no data leaving your network.
+
+**🔒 Perfect for Restricted Environments**
+While many clipboard sharing solutions rely on external servers, AdbClipboard works entirely through your local ADB connection. Ideal for developers in banks, government agencies, and enterprise environments where external clipboard services are blocked for security reasons.
+
+**✨ Key Features:**
+• **Automatic PC → Android sync** - Copy on PC, paste instantly on Android
+• **Manual Android → PC sync** - Tap floating window to transfer clipboard content
+• **Zero internet dependency** - Works completely offline through ADB
+• **Ultra lightweight** - Minimal app footprint and resource usage
+• **USB & WiFi support** - Connect via cable or wireless ADB
+• **Security focused** - No internet permission, all data stays local
+
+**🛠️ How It Works:**
+The app uses a floating window overlay to access Android's clipboard (due to Android security restrictions). When you copy text on your PC, it automatically appears on your Android clipboard. To copy from Android to PC, simply tap the AdbClipboard floating window.
+
+**📋 Requirements:**
+• ADB debugging enabled on your device
+• Python script running on your PC (included with download)
+• "Display over other apps" permission for floating window
+
+**🔐 Privacy & Security:**
+• No internet permission requested
+• No external servers or cloud services
+• All clipboard data remains within your local network
+• Perfect for security-conscious development environments
+
+**👨‍💻 For Developers Only**
+This tool is specifically designed for Android developers who need reliable clipboard sync during development and testing workflows.
+
+Download the companion Python script from: github.com/PRosenb/AdbClipboard
+
+*Streamline your development workflow with secure, local clipboard synchronization.*
