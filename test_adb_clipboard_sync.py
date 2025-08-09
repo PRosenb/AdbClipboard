@@ -461,6 +461,7 @@ class TestClipboardSyncManager(unittest.TestCase):
         self.assertEqual(self.adb_manager.write_to_device.call_count, 2)
         self.adb_manager.write_to_device.assert_any_call("device1", "new content")
         self.adb_manager.write_to_device.assert_any_call("device2", "new content")
+        self.logger.info.assert_any_call("Syncing clipboard to 2 device(s) - 11 characters")
     
     def test_sync_clipboard_to_devices_no_change(self):
         """Test syncing clipboard to devices when content hasn't changed"""
@@ -520,6 +521,7 @@ class TestClipboardSyncManager(unittest.TestCase):
         self.assertTrue(result)
         self.clipboard_handler.write_clipboard.assert_called_once_with("device content")
         self.assertEqual(self.sync_manager.previous_clipboard, "device content")
+        self.logger.info.assert_called_with("Updating desktop clipboard from device1 - 14 characters")
     
     def test_sync_clipboard_from_devices_no_change(self):
         """Test syncing clipboard from devices when content is same"""
