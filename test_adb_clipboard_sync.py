@@ -15,7 +15,7 @@ from typing import List, Optional
 # Import classes from the main script
 # Assuming the main script is saved as 'adb_clipboard_sync.py'
 try:
-    from adbclipboard import (
+    from adb_clipboard_sync import (
         Config,
         Response, 
         ResponseStatus,

@@ -74,13 +74,13 @@ Google Play Store.
 
 ```bash
 # Copy the script to your home directory
-cp ./adbclipboard.py ~/
+cp ./adb_clipboard_sync.py ~/
 
 # Make the script executable
-chmod +x ~/adbclipboard.py
+chmod +x ~/adb_clipboard_sync.py
 
 # Run the script
-~/adbclipboard.py
+~/adb_clipboard_sync.py
 ```
 
 ### Prerequisites
