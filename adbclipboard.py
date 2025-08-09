@@ -163,7 +163,7 @@ def readFromDevice(deviceHash):
     # Try to read the file
     result = runAdbCommand([
         '-s', deviceHash, 'shell', 'cat', file_path
-    ], context="read from device {0}".format(deviceHash))
+    ], context="check if file exists and read it from device {0}".format(deviceHash))
 
     if result is None:
         response.status = 1
