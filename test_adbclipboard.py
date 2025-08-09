@@ -7,6 +7,11 @@ import unittest
 from unittest.mock import Mock, patch
 from typing import List, Optional
 
+# Run Tests:
+# pip install pytest
+# pytest test_adb_clipboard_sync.py -v
+
+
 # Import classes from the main script
 # Assuming the main script is saved as 'adb_clipboard_sync.py'
 try:
