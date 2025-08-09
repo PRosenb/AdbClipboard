@@ -94,19 +94,6 @@ def runAdbCommand(args, timeout=30, input_text=None, context="adb command"):
     return runExternalCommand(cmd, timeout, input_text, context)
 
 
-def runPbCommand(command, timeout=10, input_text=None):
-    """Run macOS clipboard command (pbcopy/pbpaste) with centralized error handling"""
-    context = "macOS {0} command".format(command)
-    return runExternalCommand([command], timeout, input_text, context)
-
-
-def runXclipCommand(args, timeout=10, input_text=None):
-    """Run Linux xclip command with centralized error handling"""
-    cmd = ['xclip'] + args
-    context = "Linux xclip command"
-    return runExternalCommand(cmd, timeout, input_text, context)
-
-
 def checkAdbDependency():
     result = runAdbCommand([], timeout=10, context="adb dependency check")
     return result is not None
@@ -284,34 +271,45 @@ def syncWithDevices(clipboardHandler):
 
 
 class ClipboardHandlerMac(object):
+    def runPbCommand(self, command, timeout=10, input_text=None):
+        """Run macOS clipboard command (pbcopy/pbpaste) with centralized error handling"""
+        context = "macOS {0} command".format(command)
+        return runExternalCommand([command], timeout, input_text, context)
+
     def checkDependencies(self):
         # on Mac pbpaste is preinstalled
         return True
 
     def readClipboard(self):
-        result = runPbCommand('pbpaste')
+        result = self.runPbCommand('pbpaste')
         if result is None or result.returncode != 0:
             return ""
         return result.stdout
 
     def writeClipboard(self, text):
-        result = runPbCommand('pbcopy', input_text=text)
+        result = self.runPbCommand('pbcopy', input_text=text)
         # writeClipboard doesn't need to return anything, errors are handled by runPbCommand
 
 
 class ClipboardHandlerLinux(object):
+    def runXclipCommand(self, args, timeout=10, input_text=None):
+        """Run Linux xclip command with centralized error handling"""
+        cmd = ['xclip'] + args
+        context = "Linux xclip command"
+        return runExternalCommand(cmd, timeout, input_text, context)
+
     def checkDependencies(self):
-        result = runXclipCommand(['-version'])
+        result = self.runXclipCommand(['-version'])
         return result is not None and result.returncode == 0
 
     def readClipboard(self):
-        result = runXclipCommand(['-o'])
+        result = self.runXclipCommand(['-o'])
         if result is None or result.returncode != 0:
             return ""
         return result.stdout
 
     def writeClipboard(self, text):
-        result = runXclipCommand([], input_text=text)
+        result = self.runXclipCommand([], input_text=text)
         # writeClipboard doesn't need to return anything, errors are handled by runXclipCommand
 
 
