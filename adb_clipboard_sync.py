@@ -43,6 +43,7 @@ class Config:
     connected_devices_delay: int = CONNECTED_DEVICES_DELAY_DEFAULT
     no_connected_device_delay: int = NO_CONNECTED_DEVICE_DELAY_DEFAULT
     log_file: Optional[str] = None
+    log_clipboard_content: bool = False  # Default to False for security
 
 
 class ClipboardHandler(ABC):
@@ -124,9 +125,10 @@ class CommandRunner:
 class AdbManager:
     """Manager for ADB operations"""
     
-    def __init__(self, command_runner: CommandRunner, logger: logging.Logger):
+    def __init__(self, command_runner: CommandRunner, logger: logging.Logger, config: Config):
         self.runner = command_runner
         self.logger = logger
+        self.config = config
     
     def run_adb_command(self, args: List[str], timeout: int = DEFAULT_TIMEOUT, 
                        input_text: Optional[str] = None, context: str = "adb command") -> Optional[subprocess.CompletedProcess]:
@@ -198,7 +200,13 @@ class AdbManager:
         # Clean up the file after successful read
         if content:
             self._cleanup_device_file(device_hash)
-            self.logger.info(f"Read from {device_hash}: {content}")
+            self.logger.debug(f"Read from {device_hash}: {len(content)} characters")
+            # Only show content in debug mode if explicitly requested
+            if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.DEBUG):
+                content_preview = content[:50] + '...' if len(content) > 50 else content
+                self.logger.debug(f"Content preview: {content_preview}")
+        else:
+            self.logger.debug(f"Read from {device_hash}: empty clipboard")
         
         return Response(ResponseStatus.SUCCESS, content)
     
@@ -350,14 +358,21 @@ class ClipboardSyncManager:
             self.previous_clipboard = current_clipboard
             has_compatible_device = False
             
+            self.logger.info(f"Syncing clipboard to {len(devices)} device(s) - {len(current_clipboard)} characters")
+            
             for device in devices:
                 response = self.adb_manager.write_to_device(device, current_clipboard)
-                status = " (success)" if response.status == ResponseStatus.SUCCESS else " (failed)"
+                status_text = "success" if response.status == ResponseStatus.SUCCESS else "failed"
                 
                 if response.status == ResponseStatus.SUCCESS:
                     has_compatible_device = True
                 
-                self.logger.info(f"Write to {device}: {current_clipboard[:50]}{'...' if len(current_clipboard) > 50 else ''}{status}")
+                self.logger.info(f"Write to {device}: {status_text}")
+                
+                # Only show content in debug mode if explicitly enabled
+                if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.DEBUG):
+                    content_preview = current_clipboard[:50] + '...' if len(current_clipboard) > 50 else current_clipboard
+                    self.logger.debug(f"Content sent to {device}: {content_preview}")
             
             if not has_compatible_device:
                 self._handle_no_compatible_devices()
@@ -379,7 +394,13 @@ class ClipboardSyncManager:
                 device_text = response.data
                 
                 if device_text and device_text != desktop_clipboard:
-                    self.logger.info(f"Updating desktop clipboard from {device}: {device_text}")
+                    self.logger.info(f"Updating desktop clipboard from {device} - {len(device_text)} characters")
+                    
+                    # Only show content in debug mode if explicitly enabled
+                    if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.DEBUG):
+                        content_preview = device_text[:50] + '...' if len(device_text) > 50 else device_text
+                        self.logger.debug(f"New clipboard content: {content_preview}")
+                    
                     self.clipboard_handler.write_clipboard(device_text)
                     self.previous_clipboard = device_text
                     return True
@@ -447,6 +468,7 @@ Examples:
   %(prog)s -v                        # Run with verbose output
   %(prog)s -c 3 -n 30               # Custom delays
   %(prog)s --log-file sync.log       # Log to file
+  %(prog)s --log-clipboard-content   # Enable clipboard content logging (security risk)
         """)
     
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -457,6 +479,8 @@ Examples:
                         help=f'Delay between checks when no devices connected (default: {NO_CONNECTED_DEVICE_DELAY_DEFAULT}s)')
     parser.add_argument('--log-file', type=str,
                         help='Log to specified file in addition to console')
+    parser.add_argument('--log-clipboard-content', action='store_true',
+                        help='Log actual clipboard content (WARNING: security risk - may expose sensitive data)')
     
     args = parser.parse_args()
     
@@ -464,7 +488,8 @@ Examples:
         verbose=args.verbose,
         connected_devices_delay=args.connected_devices_delay,
         no_connected_device_delay=args.no_connected_device_delay,
-        log_file=args.log_file
+        log_file=args.log_file,
+        log_clipboard_content=args.log_clipboard_content
     )
 
 
@@ -476,7 +501,7 @@ def main():
         
         # Initialize components
         command_runner = CommandRunner(logger)
-        adb_manager = AdbManager(command_runner, logger)
+        adb_manager = AdbManager(command_runner, logger, config)
         clipboard_handler = create_clipboard_handler(command_runner)
         
         # Check dependencies

@@ -61,7 +61,7 @@ class TestCommandRunner(unittest.TestCase):
             ['echo', 'test'],
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=30,  # DEFAULT_TIMEOUT
             input=None
         )
         self.logger.debug.assert_called_once_with("Running test command: echo test")
@@ -149,8 +149,9 @@ class TestAdbManager(unittest.TestCase):
     
     def setUp(self):
         self.logger = Mock(spec=logging.Logger)
+        self.config = Config()
         self.runner_mock = Mock(spec=CommandRunner)
-        self.adb_manager = AdbManager(self.runner_mock, self.logger)
+        self.adb_manager = AdbManager(self.runner_mock, self.logger, self.config)
     
     def test_check_dependency_success(self):
         """Test successful ADB dependency check"""
@@ -260,7 +261,7 @@ class TestAdbManager(unittest.TestCase):
         # Given
         mock_result = Mock()
         mock_result.returncode = 0
-        mock_result.stdout = "clipboard content from device"
+        mock_result.stdout = "clipboard content from device\n"
         mock_result.stderr = ""
         self.runner_mock.run_command.return_value = mock_result
         
@@ -435,13 +436,16 @@ class TestClipboardSyncManager(unittest.TestCase):
     def setUp(self):
         self.config = Config(verbose=True, connected_devices_delay=1, no_connected_device_delay=2)
         self.logger = Mock(spec=logging.Logger)
+        # Configure logger mock to return proper values for isEnabledFor
+        self.logger.isEnabledFor.return_value = True
         self.clipboard_handler = Mock()
         self.adb_manager = Mock()
         self.sync_manager = ClipboardSyncManager(
             self.config, self.clipboard_handler, self.adb_manager, self.logger
         )
     
-    def test_sync_clipboard_to_devices_success(self):
+    @patch('time.sleep')  # Mock sleep to prevent actual delays in tests
+    def test_sync_clipboard_to_devices_success(self, mock_sleep):
         """Test syncing clipboard to devices when content changes"""
         # Given
         self.clipboard_handler.read_clipboard.return_value = "new content"
@@ -471,6 +475,37 @@ class TestClipboardSyncManager(unittest.TestCase):
         self.assertFalse(result)
         self.adb_manager.write_to_device.assert_not_called()
     
+    def test_sync_clipboard_to_devices_empty_clipboard(self):
+        """Test syncing clipboard to devices when clipboard is empty"""
+        # Given
+        self.clipboard_handler.read_clipboard.return_value = ""
+        self.sync_manager.previous_clipboard = "old content"
+        
+        # When
+        result = self.sync_manager._sync_clipboard_to_devices(["device1"])
+        
+        # Then
+        self.assertFalse(result)  # Should not sync empty clipboard
+        self.adb_manager.write_to_device.assert_not_called()
+    
+    @patch('time.sleep')  # Mock sleep to prevent delays
+    def test_sync_clipboard_to_devices_no_compatible_devices(self, mock_sleep):
+        """Test syncing to devices when no compatible devices found"""
+        # Given
+        self.clipboard_handler.read_clipboard.return_value = "new content"
+        self.sync_manager.previous_clipboard = "old content"
+        error_response = Response(ResponseStatus.ERROR, "")
+        self.adb_manager.write_to_device.return_value = error_response
+        
+        # When
+        result = self.sync_manager._sync_clipboard_to_devices(["device1"])
+        
+        # Then
+        self.assertTrue(result)  # Still returns True because clipboard changed
+        self.adb_manager.write_to_device.assert_called_once_with("device1", "new content")
+        # Should call _handle_no_compatible_devices which sleeps
+        mock_sleep.assert_called_once()
+    
     def test_sync_clipboard_from_devices_success(self):
         """Test syncing clipboard from devices when device has new content"""
         # Given
@@ -499,6 +534,36 @@ class TestClipboardSyncManager(unittest.TestCase):
         # Then
         self.assertFalse(result)
         self.clipboard_handler.write_clipboard.assert_not_called()
+    
+    def test_sync_clipboard_from_devices_empty_device_clipboard(self):
+        """Test syncing from devices when device clipboard is empty"""
+        # Given
+        self.clipboard_handler.read_clipboard.return_value = "desktop content"
+        device_response = Response(ResponseStatus.SUCCESS, "")  # Empty device clipboard
+        self.adb_manager.read_from_device.return_value = device_response
+        
+        # When
+        result = self.sync_manager._sync_clipboard_from_devices(["device1"])
+        
+        # Then
+        self.assertFalse(result)  # Should not sync empty content
+        self.clipboard_handler.write_clipboard.assert_not_called()
+    
+    @patch('time.sleep')
+    def test_sync_clipboard_from_devices_no_compatible_devices(self, mock_sleep):
+        """Test syncing from devices when no compatible devices found"""
+        # Given
+        error_response = Response(ResponseStatus.ERROR, "")
+        self.adb_manager.read_from_device.return_value = error_response
+        
+        # When
+        result = self.sync_manager._sync_clipboard_from_devices(["device1"])
+        
+        # Then
+        self.assertFalse(result)
+        self.clipboard_handler.write_clipboard.assert_not_called()
+        # Should call _handle_no_compatible_devices which sleeps
+        mock_sleep.assert_called_once()
 
 
 class TestConfiguration(unittest.TestCase):
@@ -510,9 +575,10 @@ class TestConfiguration(unittest.TestCase):
         
         # Then
         self.assertFalse(config.verbose)
-        self.assertEqual(config.connected_devices_delay, 5)
-        self.assertEqual(config.no_connected_device_delay, 60)
+        self.assertEqual(config.connected_devices_delay, 5)  # CONNECTED_DEVICES_DELAY_DEFAULT
+        self.assertEqual(config.no_connected_device_delay, 60)  # NO_CONNECTED_DEVICE_DELAY_DEFAULT
         self.assertIsNone(config.log_file)
+        self.assertFalse(config.log_clipboard_content)
     
     def test_config_custom_values(self):
         """Test Config with custom values"""
@@ -521,7 +587,8 @@ class TestConfiguration(unittest.TestCase):
             verbose=True, 
             connected_devices_delay=3, 
             no_connected_device_delay=30, 
-            log_file="test.log"
+            log_file="test.log",
+            log_clipboard_content=True
         )
         
         # Then
@@ -529,8 +596,9 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(config.connected_devices_delay, 3)
         self.assertEqual(config.no_connected_device_delay, 30)
         self.assertEqual(config.log_file, "test.log")
+        self.assertTrue(config.log_clipboard_content)
     
-    @patch('sys.argv', ['script.py', '-v', '-c', '3', '-n', '30', '--log-file', 'test.log'])
+    @patch('sys.argv', ['script.py', '-v', '-c', '3', '-n', '30', '--log-file', 'test.log', '--log-clipboard-content'])
     def test_parse_arguments(self):
         """Test command line argument parsing"""
         # Given - sys.argv is patched above
@@ -543,6 +611,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(config.connected_devices_delay, 3)
         self.assertEqual(config.no_connected_device_delay, 30)
         self.assertEqual(config.log_file, "test.log")
+        self.assertTrue(config.log_clipboard_content)
 
 
 class TestResponse(unittest.TestCase):
@@ -579,6 +648,7 @@ class TestLogging(unittest.TestCase):
         # Then
         self.assertIsInstance(logger, logging.Logger)
         self.assertEqual(logger.name, 'adb_clipboard_sync')
+        self.assertEqual(logger.level, logging.INFO)
     
     def test_setup_logging_verbose(self):
         """Test verbose logging setup"""
