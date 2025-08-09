@@ -95,7 +95,8 @@ class CommandRunner:
                 input=input_text
             )
             
-            if result.returncode != 0:
+            # Only log warnings for actual errors, not expected failures
+            if result.returncode != 0 and not self._is_expected_failure(context, result):
                 self.logger.warning(f"{context} failed with return code: {result.returncode}")
                 if result.stderr:
                     self.logger.warning(f"Error output: {result.stderr.strip()}")
@@ -111,6 +112,13 @@ class CommandRunner:
         except Exception as e:
             self.logger.error(f"Error running {context}: {e}")
             return None
+    
+    def _is_expected_failure(self, context: str, result: subprocess.CompletedProcess) -> bool:
+        """Check if a command failure is expected and should not be logged as warning"""
+        # Reading clipboard file when it doesn't exist is expected
+        if "read from device" in context and result.stderr and "No such file or directory" in result.stderr:
+            return True
+        return False
 
 
 class AdbManager:
@@ -168,8 +176,6 @@ class AdbManager:
     
     def read_from_device(self, device_hash: str) -> Response:
         """Read text from device clipboard"""
-        response = Response()
-        
         # Try to read the clipboard file
         result = self.run_adb_command([
             '-s', device_hash, 'shell', 'cat', CLIPBOARD_FILE_PATH
@@ -178,14 +184,13 @@ class AdbManager:
         if result is None:
             return Response(ResponseStatus.ERROR, "")
         
-        # Check if file doesn't exist (expected behavior when no clipboard changes)
-        if result.stderr and "No such file or directory" in result.stderr:
-            self.logger.debug(f"No clipboard file on {device_hash} (expected when no clipboard changes)")
+        # Check if file doesn't exist (expected when no clipboard changes)
+        if result.returncode != 0 and result.stderr and "No such file or directory" in result.stderr:
+            # This is expected behavior - don't log as error
             return Response(ResponseStatus.SUCCESS, "")
         
         if result.returncode != 0:
-            if result.stderr:
-                self.logger.warning(f"Read error from {device_hash}: {result.stderr}")
+            # This is an actual error
             return Response(ResponseStatus.ERROR, "")
         
         content = result.stdout.strip()
