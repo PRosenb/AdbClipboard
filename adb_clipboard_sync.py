@@ -370,9 +370,9 @@ class ClipboardSyncManager:
                 self.logger.info(f"Write to {device}: {status_text}")
                 
                 # Only show content in debug mode if explicitly enabled
-                if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.DEBUG):
+                if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.INFO):
                     content_preview = current_clipboard[:50] + '...' if len(current_clipboard) > 50 else current_clipboard
-                    self.logger.debug(f"Content sent to {device}: {content_preview}")
+                    self.logger.info(f"Content sent to {device}: {content_preview}")
             
             if not has_compatible_device:
                 self._handle_no_compatible_devices()
@@ -397,9 +397,9 @@ class ClipboardSyncManager:
                     self.logger.info(f"Updating desktop clipboard from {device} - {len(device_text)} characters")
                     
                     # Only show content in debug mode if explicitly enabled
-                    if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.DEBUG):
+                    if self.config.log_clipboard_content and self.logger.isEnabledFor(logging.INFO):
                         content_preview = device_text[:50] + '...' if len(device_text) > 50 else device_text
-                        self.logger.debug(f"New clipboard content: {content_preview}")
+                        self.logger.info(f"New clipboard content: {content_preview}")
                     
                     self.clipboard_handler.write_clipboard(device_text)
                     self.previous_clipboard = device_text
