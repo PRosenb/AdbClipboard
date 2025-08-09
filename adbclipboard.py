@@ -6,11 +6,22 @@ import platform
 import re
 import subprocess
 import time
+from enum import Enum
 from urllib import parse
 
 # Constants
 CONNECTED_DEVICES_DELAY_DEFAULT = 5
 NO_CONNECTED_DEVICE_DELAY_DEFAULT = 60
+
+# Response status enum
+class ResponseStatus(Enum):
+    SUCCESS = -1  # Success status (ADB broadcast returns -1 for success)
+    ERROR = 1     # Error status
+
+class Response(object):
+    def __init__(self):
+        self.status: ResponseStatus = ResponseStatus.ERROR
+        self.data: str = ""
 
 verbose = False
 connectedDevicesDelay = CONNECTED_DEVICES_DELAY_DEFAULT
@@ -133,7 +144,7 @@ def writeToDevice(deviceHash, urlEncodedString):
     if result is None or result.returncode != 0:
         # Return error response
         response = Response()
-        response.status = 1
+        response.status = ResponseStatus.ERROR
         return response
 
     if verbose is True:
@@ -153,28 +164,28 @@ def readFromDevice(deviceHash):
     ], context="check if file exists and read it from device {0}".format(deviceHash))
 
     if result is None:
-        response.status = 1
+        response.status = ResponseStatus.ERROR
         response.data = ""
         return response
 
     if result.stderr:
         resultMatcher = re.compile("^.*No such file or directory")
         if resultMatcher.match(result.stderr):
-            response.status = -1
+            response.status = ResponseStatus.SUCCESS
             response.data = ""
             return response
         else:
             print("read file error from {0}:\n{1}".format(deviceHash, result.stderr))
-            response.status = 1
+            response.status = ResponseStatus.ERROR
             response.data = ""
             return response
 
     if result.returncode != 0:
-        response.status = 1
+        response.status = ResponseStatus.ERROR
         response.data = ""
         return response
 
-    response.status = -1
+    response.status = ResponseStatus.SUCCESS
     file_content = result.stdout
 
     # Remove the file after reading (only if read was successful)
@@ -192,11 +203,6 @@ def readFromDevice(deviceHash):
     return response
 
 
-class Response(object):
-    status = None
-    data = None
-
-
 def parseBroadcastResponse(resultString):
     resultMatcher = re.compile("^.*\n.*result=([\-]{0,1}[0-9]*).*")
     resultMatch = resultMatcher.match(resultString)
@@ -204,8 +210,14 @@ def parseBroadcastResponse(resultString):
     if resultMatch and len(resultMatch.groups()) > 0:
         if len(resultMatch.group(1)) == 0:
             print("error: " + resultMatch.group(1))
-        response.status = int(resultMatch.group(1))
-        if response.status == -1:
+        status_value = int(resultMatch.group(1))
+        # Convert integer status to enum
+        if status_value == -1:
+            response.status = ResponseStatus.SUCCESS
+        else:
+            response.status = ResponseStatus.ERROR
+        
+        if response.status == ResponseStatus.SUCCESS:
             # re.DOTALL to match newline as well
             dataMatcher = re.compile("^.*\n.*data=\"(.*)\"$", re.DOTALL)
             dataMatch = dataMatcher.match(resultString)
@@ -238,7 +250,7 @@ def syncWithDevices(clipboardHandler):
                         response = writeToDevice(
                             deviceHash, urlEncodedString)
                         printedStatus = ""
-                        if response.status == -1:
+                        if response.status == ResponseStatus.SUCCESS:
                             hasDeviceWithAdbClipboardInstalled = True
                         else:
                             printedStatus = " (failed)"
@@ -247,7 +259,7 @@ def syncWithDevices(clipboardHandler):
             else:
                 for deviceHash in deviceHashes:
                     response = readFromDevice(deviceHash)
-                    if response.status == -1:
+                    if response.status == ResponseStatus.SUCCESS:
                         hasDeviceWithAdbClipboardInstalled = True
                     deviceClipboardText = response.data
 
@@ -319,6 +331,6 @@ else:
     clipboardHandler = ClipboardHandlerMac()
 
 parseArgs()
-if checkAdbDependency() is True:
-    if clipboardHandler.checkDependencies() is True:
+if checkAdbDependency():
+    if clipboardHandler.checkDependencies():
         syncWithDevices(clipboardHandler)
