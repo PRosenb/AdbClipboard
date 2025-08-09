@@ -10,3 +10,4 @@
 .externalNativeBuild
 keystoreAdbClipboard
 .idea
+__pycache__
