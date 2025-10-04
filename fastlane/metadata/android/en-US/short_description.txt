@@ -1,1 +1,1 @@
-read/write the Android clipboard using ADB
+Read/Write the Android clipboard using ADB
