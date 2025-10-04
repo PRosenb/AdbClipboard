@@ -1,1 +1,41 @@
-<p><i>ADB Clipboard</i> is a small app on your smartphone that allows you to read/write the Android clipboard using ADB.</p><p><b>Features:</b></p><ul><li>Easy to use</li><li>Very small app</li><li>Does not request any permissions</li><li>Python script on your PC to communicate with the app over adb (USB cable or Wifi for rooted devices)</li></ul><p><b>Installation:</b></p><p>There are two parts to install: The app on your test phones and the python script on your development PC. The app you can install from here, the python script can be obtained from the app’s Github repo. Please find further instructions there.</p>
+<b>Secure Clipboard Sync for Developers</b>
+
+AdbClipboard enables seamless clipboard synchronisation between your Android device and development PC through ADB - no external servers, no internet required, no data leaving your network.
+
+<b>Perfect for Restricted Environments</b>
+
+Whilst many clipboard sharing solutions rely on external servers, AdbClipboard works entirely through your local ADB connection. Ideal for developers in banks, government agencies, and enterprise environments where external clipboard services are blocked for security reasons.
+
+<b>Key Features:</b>
+
+• Automatic PC to Android sync - Copy on PC, paste instantly on Android  
+• Manual Android to PC sync - Tap floating window to transfer clipboard content  
+• Zero internet dependency - Works completely offline through ADB  
+• Ultra lightweight - Minimal app footprint and resource usage  
+• USB and WiFi support - Connect via cable or wireless ADB  
+• Security focussed - No internet permission, all data stays local  
+
+<b>How It Works:</b>
+
+The app uses a floating window overlay to access Android's clipboard (due to Android security restrictions). When you copy text on your PC, it automatically appears on your Android clipboard. To copy from Android to PC, simply tap the AdbClipboard floating window.
+
+<b>Requirements:</b>
+
+• ADB debugging enabled on your device  
+• Python script running on your PC (included with download)  
+• "Display over other apps" permission for floating window  
+
+<b>Privacy and Security:</b>
+
+• No internet permission requested  
+• No external servers or cloud services  
+• All clipboard data remains within your local network  
+• Perfect for security-conscious development environments  
+
+<b>For Developers Only</b>
+
+This tool is specifically designed for Android developers who need reliable clipboard sync during development and testing workflows.
+
+Download the companion Python script from: <a href="https://github.com/PRosenb/AdbClipboard">github.com/PRosenb/AdbClipboard</a>
+
+<i>Streamline your development workflow with secure, local clipboard synchronisation.</i>
