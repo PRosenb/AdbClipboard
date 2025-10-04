@@ -1,0 +1,1 @@
+Per ADB lesend und schreibend auf die Android Zwischenablage zugreifen
