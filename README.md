@@ -2,6 +2,8 @@
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-AdbClipboard-blue?logo=github)](https://github.com/PRosenb/AdbClipboard)
 [![Google Play](https://img.shields.io/badge/Google%20Play-Download-green?logo=googleplay)](https://play.google.com/store/apps/details?id=ch.pete.adbclipboard)
+[![Get it at IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/ch.pete.adbclipboard)](https://apt.izzysoft.de/packages/ch.pete.adbclipboard)
+[<img src="https://shields.rbtlog.dev/simple/ch.pete.adbclipboard" alt="RB Status">](https://shields.rbtlog.dev/ch.pete.adbclipboard)
 
 AdbClipboard is a lightweight Android application that enables seamless clipboard synchronization
 between your smartphone and PC using ADB (Android Debug Bridge).
