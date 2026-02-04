@@ -133,7 +133,7 @@ ADB commands:
 ### Write to Android
 
 ```bash
-adb shell am broadcast -a ch.pete.adbclipboard.WRITE -n ch.pete.adbclipboard/.WriteReceiver -e text "Text for the clipboard"
+adb shell 'am broadcast -a ch.pete.adbclipboard.WRITE -n ch.pete.adbclipboard/.WriteReceiver -e text "Text for the clipboard"'
 ```
 
 ### Read from Android
