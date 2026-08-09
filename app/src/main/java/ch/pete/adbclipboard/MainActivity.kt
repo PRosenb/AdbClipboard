@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +21,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -37,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationStatus: TextView
     private lateinit var notificationAction: MaterialButton
     private lateinit var bubbleSwitch: MaterialSwitch
-    private lateinit var bubbleStatus: TextView
+    private lateinit var themeToggle: MaterialButton
     private lateinit var bubbleSizeSlider: Slider
     private lateinit var bubbleSizeLabel: TextView
     private lateinit var pcStatusDot: View
@@ -54,10 +56,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Apply the persisted theme before the activity is created so there is no
+        // flash of the wrong mode (and no redundant recreation). Until the user
+        // picks a mode, follow the system.
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        AppCompatDelegate.setDefaultNightMode(
+            when {
+                !prefs.contains(PREF_DARK_MODE) -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                prefs.getBoolean(PREF_DARK_MODE, false) -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_NO
+            }
+        )
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
-
-        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         requestNotificationPermissionIfNeeded()
 
         overlayStatus = findViewById(R.id.overlay_status)
@@ -65,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         notificationStatus = findViewById(R.id.notification_status)
         notificationAction = findViewById(R.id.notification_action)
         bubbleSwitch = findViewById(R.id.bubble_switch)
-        bubbleStatus = findViewById(R.id.bubble_status)
+        themeToggle = findViewById(R.id.theme_toggle)
         bubbleSizeSlider = findViewById(R.id.bubble_size_slider)
         bubbleSizeLabel = findViewById(R.id.bubble_size_label)
         pcStatusDot = findViewById(R.id.pc_status_dot)
@@ -89,6 +100,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         bubbleSwitch.setOnCheckedChangeListener { _, checked -> setBubbleVisible(checked) }
+
+        themeToggle.setOnClickListener {
+            val darkMode = isDarkMode()
+            prefs.edit().putBoolean(PREF_DARK_MODE, !darkMode).apply()
+            AppCompatDelegate.setDefaultNightMode(
+                if (darkMode) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
+            )
+        }
 
         // Bubble size: 36dp (smallest) to 160dp (largest). Persists immediately and
         // live-resizes a running bubble via an intent extra.
@@ -141,6 +160,7 @@ class MainActivity : AppCompatActivity() {
             prefs.getInt(FloatingViewService.PREF_BUBBLE_SIZE_DP, FloatingViewService.DEFAULT_BUBBLE_SIZE_DP)
                 .toFloat()
         bubbleSizeLabel.text = getString(R.string.bubble_size_value, bubbleSizeSlider.value.toInt())
+        updateThemeToggle()
         refreshStatus()
         refreshHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
     }
@@ -182,17 +202,25 @@ class MainActivity : AppCompatActivity() {
         bubbleSwitch.isEnabled = overlayGranted
         bubbleSwitch.isChecked = bubbleRunning
         bubbleSwitch.setOnCheckedChangeListener { _, checked -> setBubbleVisible(checked) }
-        setChip(
-            bubbleStatus,
-            if (bubbleRunning) R.string.bubble_active else R.string.bubble_hidden,
-            if (bubbleRunning) R.color.chip_green_fg else R.color.chip_gray_fg,
-            if (bubbleRunning) R.color.chip_green_bg else R.color.chip_gray_bg
-        )
         findViewById<View>(R.id.bubble_hint).visibility =
             if (overlayGranted) GONE else VISIBLE
 
         // PC connection via the heartbeat file the PC script keeps touching
         updatePcStatus()
+    }
+
+    private fun isDarkMode(): Boolean {
+        return resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    }
+
+    /** Keeps the header toggle's icon + description in sync with the current mode. */
+    private fun updateThemeToggle() {
+        val dark = isDarkMode()
+        themeToggle.setIconResource(if (dark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode)
+        themeToggle.contentDescription = getString(
+            if (dark) R.string.theme_toggle_to_light else R.string.theme_toggle_to_dark
+        )
     }
 
     private fun setChip(view: TextView, textRes: Int, fgRes: Int, bgRes: Int) {
@@ -286,6 +314,7 @@ class MainActivity : AppCompatActivity() {
         private const val REQUEST_NOTIFICATIONS_PERMISSION = 2
         private const val PREFS_NAME = "adb_clipboard_prefs"
         private const val PREF_BUBBLE_HIDDEN = "bubble_hidden"
+        private const val PREF_DARK_MODE = "dark_mode"
         private const val PREF_NOTIF_PERMISSION_REQUESTED = "notif_permission_requested"
         private const val HEARTBEAT_FILE_NAME = "heartbeat"
         private const val PC_HEARTBEAT_TIMEOUT_MS = 20_000L

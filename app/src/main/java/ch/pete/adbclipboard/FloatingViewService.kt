@@ -17,6 +17,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import android.widget.ImageView
 import androidx.cardview.widget.CardView
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -35,6 +36,7 @@ class FloatingViewService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: View
     private lateinit var bubbleCard: CardView
+    private lateinit var launcherIcon: ImageView
     private lateinit var gestureDetector: GestureDetector
     private lateinit var prefs: SharedPreferences
     private lateinit var windowParams: WindowManager.LayoutParams
@@ -89,6 +91,7 @@ class FloatingViewService : Service() {
 
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget, null)
         bubbleCard = floatingView.findViewById(R.id.bubble_card)
+        launcherIcon = floatingView.findViewById(R.id.launcher_icon)
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         bubbleSizeDp = prefs.getInt(PREF_BUBBLE_SIZE_DP, DEFAULT_BUBBLE_SIZE_DP)
         setCardSize(dp(bubbleSizeDp))
@@ -325,6 +328,13 @@ class FloatingViewService : Service() {
         lp.height = sizePx
         bubbleCard.layoutParams = lp
         bubbleCard.radius = sizePx / 2f
+
+        // Scale the inner logo with the bubble so it stays proportional (48/60dp ratio).
+        val iconSize = (sizePx * ICON_SCALE).toInt()
+        val iconLp = launcherIcon.layoutParams
+        iconLp.width = iconSize
+        iconLp.height = iconSize
+        launcherIcon.layoutParams = iconLp
     }
 
     private fun fingerDistance(event: MotionEvent): Float {
@@ -469,5 +479,6 @@ class FloatingViewService : Service() {
         private const val EDGE_MARGIN = 0
         private const val FLING_DISMISS_VELOCITY = 2000f
         private const val MIN_FLING_DISTANCE = 200
+        private const val ICON_SCALE = 0.8f
     }
 }
