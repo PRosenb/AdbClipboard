@@ -1,22 +1,54 @@
 package ch.pete.adbclipboard
 
 import android.Manifest
-import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.materialswitch.MaterialSwitch
+import java.io.File
+import java.text.DateFormat
+import java.util.Date
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: SharedPreferences
-    private lateinit var toggleBubbleButton: Button
+
+    private lateinit var overlayStatus: TextView
+    private lateinit var overlayAction: MaterialButton
+    private lateinit var notificationStatus: TextView
+    private lateinit var notificationAction: MaterialButton
+    private lateinit var bubbleSwitch: MaterialSwitch
+    private lateinit var bubbleStatus: TextView
+    private lateinit var pcStatusDot: View
+    private lateinit var pcStatusText: TextView
+    private lateinit var historyList: LinearLayout
+    private lateinit var historyEmpty: TextView
+
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            refreshStatus()
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,54 +57,180 @@ class MainActivity : Activity() {
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         requestNotificationPermissionIfNeeded()
 
-        findViewById<Button>(R.id.request_permission).setOnClickListener {
+        overlayStatus = findViewById(R.id.overlay_status)
+        overlayAction = findViewById(R.id.overlay_action)
+        notificationStatus = findViewById(R.id.notification_status)
+        notificationAction = findViewById(R.id.notification_action)
+        bubbleSwitch = findViewById(R.id.bubble_switch)
+        bubbleStatus = findViewById(R.id.bubble_status)
+        pcStatusDot = findViewById(R.id.pc_status_dot)
+        pcStatusText = findViewById(R.id.pc_status_text)
+        historyList = findViewById(R.id.history_list)
+        historyEmpty = findViewById(R.id.history_empty)
+
+        overlayAction.setOnClickListener {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
             )
-            startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION)
+            startActivity(intent)
         }
 
-        findViewById<Button>(R.id.close_window).setOnClickListener {
-            finish()
+        notificationAction.setOnClickListener {
+            requestPermissions(
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                REQUEST_NOTIFICATIONS_PERMISSION
+            )
         }
 
-        findViewById<Button>(R.id.close_app).setOnClickListener {
-            val serviceIntent = Intent(this, FloatingViewService::class.java)
-            stopService(serviceIntent)
-            prefs.edit().putBoolean(PREF_BUBBLE_HIDDEN, true).apply()
-            BubbleNotifications.showBubbleHiddenNotification(this)
-            finish()
+        bubbleSwitch.setOnCheckedChangeListener { _, checked -> setBubbleVisible(checked) }
+
+        findViewById<MaterialButton>(R.id.exit_button).setOnClickListener { exitApp() }
+        findViewById<MaterialButton>(R.id.history_clear).setOnClickListener {
+            ClipboardHistory.clear(this)
+            renderHistory()
         }
 
-        toggleBubbleButton = findViewById(R.id.toggle_bubble)
-        toggleBubbleButton.setOnClickListener { toggleBubble() }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            findViewById<View>(R.id.notification_row).visibility = GONE
+        }
     }
 
     override fun onResume() {
         super.onResume()
-
-        val overlayGranted = Settings.canDrawOverlays(this)
-        findViewById<Button>(R.id.request_permission).visibility =
-            if (overlayGranted) GONE else VISIBLE
-
-        if (overlayGranted && !prefs.getBoolean(PREF_BUBBLE_HIDDEN, false)) {
+        // Keep the previous behavior: opening the app starts the bubble unless it was
+        // deliberately hidden via the switch or Exit app.
+        if (Settings.canDrawOverlays(this) &&
+            !prefs.getBoolean(PREF_BUBBLE_HIDDEN, false)
+        ) {
             startService(Intent(this, FloatingViewService::class.java))
         }
-        updateToggleBubbleButton()
+        renderHistory()
+        refreshStatus()
+        refreshHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
     }
 
-    private fun toggleBubble() {
-        val hidden = prefs.getBoolean(PREF_BUBBLE_HIDDEN, false)
-        if (hidden) {
-            prefs.edit().putBoolean(PREF_BUBBLE_HIDDEN, false).apply()
-            startService(Intent(this, FloatingViewService::class.java))
+    override fun onPause() {
+        refreshHandler.removeCallbacks(refreshRunnable)
+        super.onPause()
+    }
+
+    private fun refreshStatus() {
+        // Overlay permission
+        val overlayGranted = Settings.canDrawOverlays(this)
+        setChip(
+            overlayStatus,
+            if (overlayGranted) R.string.status_granted else R.string.status_not_granted,
+            if (overlayGranted) R.color.chip_green_fg else R.color.chip_red_fg,
+            if (overlayGranted) R.color.chip_green_bg else R.color.chip_red_bg
+        )
+        overlayAction.visibility = if (overlayGranted) GONE else VISIBLE
+
+        // Notification permission (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val notificationGranted =
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                    PackageManager.PERMISSION_GRANTED
+            setChip(
+                notificationStatus,
+                if (notificationGranted) R.string.status_granted else R.string.status_not_granted,
+                if (notificationGranted) R.color.chip_green_fg else R.color.chip_red_fg,
+                if (notificationGranted) R.color.chip_green_bg else R.color.chip_red_bg
+            )
+            notificationAction.visibility = if (notificationGranted) GONE else VISIBLE
+        }
+
+        // Floating bubble - only usable when the overlay permission is granted, so the
+        // switch is gated on it and a hint explains why it is unavailable.
+        val bubbleRunning = FloatingViewService.isRunning && overlayGranted
+        bubbleSwitch.setOnCheckedChangeListener(null)
+        bubbleSwitch.isEnabled = overlayGranted
+        bubbleSwitch.isChecked = bubbleRunning
+        bubbleSwitch.setOnCheckedChangeListener { _, checked -> setBubbleVisible(checked) }
+        setChip(
+            bubbleStatus,
+            if (bubbleRunning) R.string.bubble_active else R.string.bubble_hidden,
+            if (bubbleRunning) R.color.chip_green_fg else R.color.chip_gray_fg,
+            if (bubbleRunning) R.color.chip_green_bg else R.color.chip_gray_bg
+        )
+        findViewById<View>(R.id.bubble_hint).visibility =
+            if (overlayGranted) GONE else VISIBLE
+
+        // PC connection via the heartbeat file the PC script keeps touching
+        updatePcStatus()
+    }
+
+    private fun setChip(view: TextView, textRes: Int, fgRes: Int, bgRes: Int) {
+        view.text = getString(textRes)
+        view.backgroundTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this, bgRes))
+        view.setTextColor(ContextCompat.getColor(this, fgRes))
+    }
+
+    private fun updatePcStatus() {
+        val heartbeat = File(getExternalFilesDir(null), HEARTBEAT_FILE_NAME)
+        val ageMs = System.currentTimeMillis() - heartbeat.lastModified()
+        val connected = heartbeat.exists() && ageMs < PC_HEARTBEAT_TIMEOUT_MS
+
+        pcStatusDot.backgroundTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(
+                this,
+                if (connected) R.color.status_connected else R.color.status_disconnected
+            )
+        )
+        pcStatusText.text = if (connected) {
+            getString(R.string.pc_connected_ago, ageMs / 1000)
         } else {
-            stopService(Intent(this, FloatingViewService::class.java))
+            getString(R.string.pc_waiting)
+        }
+    }
+
+    private fun setBubbleVisible(visible: Boolean) {
+        val serviceIntent = Intent(this, FloatingViewService::class.java)
+        if (visible) {
+            prefs.edit().putBoolean(PREF_BUBBLE_HIDDEN, false).apply()
+            startService(serviceIntent)
+        } else {
+            stopService(serviceIntent)
             prefs.edit().putBoolean(PREF_BUBBLE_HIDDEN, true).apply()
             BubbleNotifications.showBubbleHiddenNotification(this)
         }
-        updateToggleBubbleButton()
+        refreshStatus()
+    }
+
+    private fun exitApp() {
+        stopService(Intent(this, FloatingViewService::class.java))
+        prefs.edit().putBoolean(PREF_BUBBLE_HIDDEN, true).apply()
+        BubbleNotifications.showBubbleHiddenNotification(this)
+        finish()
+    }
+
+    private fun renderHistory() {
+        historyList.removeAllViews()
+        val entries = ClipboardHistory.load(this)
+        historyEmpty.visibility = if (entries.isEmpty()) VISIBLE else GONE
+
+        val dateFormat = DateFormat.getTimeInstance(DateFormat.SHORT)
+        entries.forEach { entry ->
+            val row = layoutInflater.inflate(R.layout.history_item, historyList, false)
+            row.findViewById<TextView>(R.id.history_preview).text = entry.text
+            row.findViewById<TextView>(R.id.history_time).text =
+                dateFormat.format(Date(entry.timestamp))
+            row.findViewById<MaterialButton>(R.id.history_copy).setOnClickListener {
+                copyToClipboard(entry.text)
+            }
+            row.findViewById<MaterialButton>(R.id.history_delete).setOnClickListener {
+                ClipboardHistory.remove(this, entry.timestamp)
+                renderHistory()
+            }
+            historyList.addView(row)
+        }
+    }
+
+    private fun copyToClipboard(text: String) {
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText(text, text))
+        Toast.makeText(this, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
     }
 
     private fun requestNotificationPermissionIfNeeded() {
@@ -89,16 +247,13 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun updateToggleBubbleButton() {
-        val hidden = prefs.getBoolean(PREF_BUBBLE_HIDDEN, false)
-        toggleBubbleButton.text = getString(if (hidden) R.string.show_bubble else R.string.hide_bubble)
-    }
-
     companion object {
-        private const val REQUEST_OVERLAY_PERMISSION = 1
         private const val REQUEST_NOTIFICATIONS_PERMISSION = 2
         private const val PREFS_NAME = "adb_clipboard_prefs"
         private const val PREF_BUBBLE_HIDDEN = "bubble_hidden"
         private const val PREF_NOTIF_PERMISSION_REQUESTED = "notif_permission_requested"
+        private const val HEARTBEAT_FILE_NAME = "heartbeat"
+        private const val PC_HEARTBEAT_TIMEOUT_MS = 20_000L
+        private const val REFRESH_INTERVAL_MS = 3000L
     }
 }

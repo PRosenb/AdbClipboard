@@ -54,6 +54,7 @@ class FloatingViewService : Service() {
     @SuppressLint("InflateParams")
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
 
         // The bubble is back: clear any "bubble hidden" notification and set up the channel.
         BubbleNotifications.ensureChannel(this)
@@ -299,6 +300,7 @@ class FloatingViewService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        isRunning = false
         positionAnimator?.cancel()
         if (::floatingView.isInitialized) {
             windowManager.removeView(floatingView)
@@ -306,6 +308,10 @@ class FloatingViewService : Service() {
     }
 
     companion object {
+        /** True while the bubble is on screen (also exposed to the main activity). */
+        @JvmStatic
+        var isRunning = false
+
         private const val SNAP_DURATION_MS = 200L
         private const val DISMISS_DURATION_MS = 250L
         private const val DISMISS_OFFSET = 200

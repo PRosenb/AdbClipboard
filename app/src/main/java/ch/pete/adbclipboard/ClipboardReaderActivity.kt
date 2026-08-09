@@ -51,6 +51,10 @@ class ClipboardReaderActivity : Activity() {
             Timber.e("Failed to write to file: $e.message")
         }
 
+        if (text.isNotEmpty()) {
+            ClipboardHistory.add(this, text)
+        }
+
         this.finish()
     }
 

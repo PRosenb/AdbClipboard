@@ -1,0 +1,12 @@
+<resources>
+    <color name="status_connected">#2E7D32</color>
+    <color name="status_disconnected">#C62828</color>
+
+    <!-- Status chip colors (alpha backgrounds work on light + dark themes) -->
+    <color name="chip_green_bg">#2633B24C</color>
+    <color name="chip_green_fg">#5ED07A</color>
+    <color name="chip_red_bg">#26E5484D</color>
+    <color name="chip_red_fg">#F07373</color>
+    <color name="chip_gray_bg">#26B0BEC5</color>
+    <color name="chip_gray_fg">#9AA7AD</color>
+</resources>

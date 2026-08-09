@@ -50,6 +50,8 @@ class WriteReceiver : BroadcastReceiver() {
                 val clip = ClipData.newPlainText(text, text)
                 clipboardManager.setPrimaryClip(clip)
 
+                ClipboardHistory.add(context, text)
+
                 // play notification tone
                 val notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 val ringtone = RingtoneManager.getRingtone(context, notification)
