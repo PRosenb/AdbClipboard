@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
@@ -37,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationAction: MaterialButton
     private lateinit var bubbleSwitch: MaterialSwitch
     private lateinit var bubbleStatus: TextView
+    private lateinit var bubbleSizeSlider: Slider
+    private lateinit var bubbleSizeLabel: TextView
     private lateinit var pcStatusDot: View
     private lateinit var pcStatusText: TextView
     private lateinit var historyList: LinearLayout
@@ -63,6 +66,8 @@ class MainActivity : AppCompatActivity() {
         notificationAction = findViewById(R.id.notification_action)
         bubbleSwitch = findViewById(R.id.bubble_switch)
         bubbleStatus = findViewById(R.id.bubble_status)
+        bubbleSizeSlider = findViewById(R.id.bubble_size_slider)
+        bubbleSizeLabel = findViewById(R.id.bubble_size_label)
         pcStatusDot = findViewById(R.id.pc_status_dot)
         pcStatusText = findViewById(R.id.pc_status_text)
         historyList = findViewById(R.id.history_list)
@@ -85,6 +90,29 @@ class MainActivity : AppCompatActivity() {
 
         bubbleSwitch.setOnCheckedChangeListener { _, checked -> setBubbleVisible(checked) }
 
+        // Bubble size: 36dp (smallest) to 160dp (largest). Persists immediately and
+        // live-resizes a running bubble via an intent extra.
+        bubbleSizeSlider.valueFrom = FloatingViewService.MIN_BUBBLE_SIZE_DP.toFloat()
+        bubbleSizeSlider.valueTo = FloatingViewService.MAX_BUBBLE_SIZE_DP.toFloat()
+        bubbleSizeSlider.stepSize = 1f
+        bubbleSizeSlider.value =
+            prefs.getInt(FloatingViewService.PREF_BUBBLE_SIZE_DP, FloatingViewService.DEFAULT_BUBBLE_SIZE_DP)
+                .toFloat()
+        bubbleSizeLabel.text = getString(R.string.bubble_size_value, bubbleSizeSlider.value.toInt())
+        bubbleSizeSlider.addOnChangeListener { _, value, fromUser ->
+            if (!fromUser) return@addOnChangeListener
+            val sizeDp = value.toInt()
+            bubbleSizeLabel.text = getString(R.string.bubble_size_value, sizeDp)
+            prefs.edit().putInt(FloatingViewService.PREF_BUBBLE_SIZE_DP, sizeDp).apply()
+            // Only live-resize a bubble that is actually on screen - never start the
+            // service just because the size changed (that would resurrect a hidden bubble).
+            if (FloatingViewService.isRunning) {
+                val intent = Intent(this, FloatingViewService::class.java)
+                intent.putExtra(FloatingViewService.EXTRA_BUBBLE_SIZE_DP, sizeDp)
+                startService(intent)
+            }
+        }
+
         findViewById<MaterialButton>(R.id.exit_button).setOnClickListener { exitApp() }
         findViewById<MaterialButton>(R.id.history_clear).setOnClickListener {
             ClipboardHistory.clear(this)
@@ -106,6 +134,13 @@ class MainActivity : AppCompatActivity() {
             startService(Intent(this, FloatingViewService::class.java))
         }
         renderHistory()
+        // The bubble can be pinched while this activity is in the back stack, which
+        // changes the persisted size - re-sync the slider (programmatic sets fire the
+        // change listener with fromUser=false, which the listener ignores).
+        bubbleSizeSlider.value =
+            prefs.getInt(FloatingViewService.PREF_BUBBLE_SIZE_DP, FloatingViewService.DEFAULT_BUBBLE_SIZE_DP)
+                .toFloat()
+        bubbleSizeLabel.text = getString(R.string.bubble_size_value, bubbleSizeSlider.value.toInt())
         refreshStatus()
         refreshHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS)
     }

@@ -16,6 +16,8 @@
     <string name="bubble_title">Floating bubble</string>
     <string name="bubble_desc">Tap to sync · drag to move · double-tap to hide</string>
     <string name="bubble_active">Active</string>
+    <string name="bubble_size_title">Bubble size</string>
+    <string name="bubble_size_value">%1$d dp</string>
     <string name="bubble_hidden">Hidden</string>
 
     <!-- PC connection -->
