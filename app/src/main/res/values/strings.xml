@@ -23,9 +23,16 @@
 \n🔧 Buttons explained:
 \n• "Enable overlay permission" - Appears if permission not yet granted. Tap to open Android settings, then find AdbClipboard in the list and toggle the permission on.
 \n• "Hide info" - Closes this screen but keeps the floating window active
-\n• "Exit app" - Completely closes AdbClipboard including the floating window</string>
+\n• "Exit app" - Completely closes AdbClipboard including the floating window
+\n• "Hide bubble"/"Show bubble" - Toggles the floating window on and off
+\n
+\n💡 TIP: Tap the bubble to sync, drag it to move, or long-press it to hide.
+\n🔲 TIP: For quicker access, add the "Sync clipboard" Quick Settings tile from the Quick Settings edit screen.</string>
     <string name="reading_clipboard">Reading clipboard..</string>
     <string name="request_permission">Enable overlay permission</string>
     <string name="close_app">Exit app</string>
     <string name="close_window">Hide info</string>
+    <string name="hide_bubble">Hide bubble</string>
+    <string name="show_bubble">Show bubble</string>
+    <string name="qs_tile_label">Sync clipboard</string>
 </resources>

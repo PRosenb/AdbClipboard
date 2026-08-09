@@ -43,4 +43,13 @@
         android:layout_marginTop="20dp"
         android:text="@string/close_app" />
 
+    <Button
+        android:id="@+id/toggle_bubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/close_window"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="20dp"
+        android:text="@string/hide_bubble" />
+
 </RelativeLayout>

@@ -5,15 +5,21 @@ import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.IBinder
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 
 class FloatingViewService : Service() {
+
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: View
+    private lateinit var gestureDetector: GestureDetector
+    private var isDragging = false
+    private var longPressed = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -22,6 +28,21 @@ class FloatingViewService : Service() {
         super.onCreate()
 
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget, null)
+
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                // Long-press hides the bubble (non-persistent; the app can bring it back)
+                longPressed = true
+                stopSelf()
+            }
+        })
+
+        // Single action source, also keeps the bubble clickable for accessibility
+        floatingView.setOnClickListener {
+            if (!isDragging && !longPressed) {
+                startClipboardReaderActivity()
+            }
+        }
 
         // Set up window parameters
         val params = WindowManager.LayoutParams(
@@ -40,16 +61,14 @@ class FloatingViewService : Service() {
         windowManager.addView(floatingView, params)
 
         makeDraggable(floatingView, params)
-
-        floatingView.setOnClickListener {
-            startClipboardReaderActivity()
-        }
     }
 
     private fun makeDraggable(
         view: View,
         params: WindowManager.LayoutParams
     ) {
+        val dragThreshold = ViewConfiguration.get(this).scaledTouchSlop
+
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
@@ -58,25 +77,41 @@ class FloatingViewService : Service() {
         view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    isDragging = false
+                    longPressed = false
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
-                    view.performClick()
+                    gestureDetector.onTouchEvent(event)
                     true
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = initialX + (event.rawX - initialTouchX).toInt()
-                    params.y = initialY + (event.rawY - initialTouchY).toInt()
-                    windowManager.updateViewLayout(view, params)
+                    val dx = event.rawX - initialTouchX
+                    val dy = event.rawY - initialTouchY
+                    if (!isDragging &&
+                        (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold)) {
+                        isDragging = true
+                    }
+                    if (isDragging) {
+                        params.x = initialX + dx.toInt()
+                        params.y = initialY + dy.toInt()
+                        windowManager.updateViewLayout(view, params)
+                    }
+                    gestureDetector.onTouchEvent(event)
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    gestureDetector.onTouchEvent(event)
                     view.performClick()
                     true
                 }
 
                 else -> {
-                    view.performClick()
-                    false
+                    gestureDetector.onTouchEvent(event)
+                    true
                 }
             }
         }
