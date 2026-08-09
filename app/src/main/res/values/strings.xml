@@ -26,7 +26,7 @@
 \n• "Exit app" - Completely closes AdbClipboard including the floating window
 \n• "Hide bubble"/"Show bubble" - Toggles the floating window on and off
 \n
-\n💡 TIP: Tap the bubble to sync, drag it to move, or long-press it to hide.
+\n💡 TIP: Tap the bubble to sync, drag it to move (it snaps to the edge),\n\nfling it off-screen to dismiss, or double-tap it to hide.
 \n🔲 TIP: For quicker access, add the "Sync clipboard" Quick Settings tile from the Quick Settings edit screen.</string>
     <string name="reading_clipboard">Reading clipboard..</string>
     <string name="request_permission">Enable overlay permission</string>
@@ -35,4 +35,7 @@
     <string name="hide_bubble">Hide bubble</string>
     <string name="show_bubble">Show bubble</string>
     <string name="qs_tile_label">Sync clipboard</string>
+    <string name="bubble_notification_channel">Bubble control</string>
+    <string name="bubble_hidden_notification_title">Bubble hidden</string>
+    <string name="bubble_hidden_notification_text">Tap to show the floating bubble</string>
 </resources>
