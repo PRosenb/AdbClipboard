@@ -13,13 +13,11 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="16dp"
-        android:paddingBottom="12dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="vertical">
+        android:paddingBottom="12dp">            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
             <ImageView
                 android:layout_width="56dp"
@@ -55,6 +53,23 @@
             android:minWidth="0dp"
             app:cornerRadius="22dp"
             app:icon="@drawable/ic_dark_mode"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="22dp"
+            app:iconTint="?attr/colorOnSecondaryContainer" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/help_button"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_gravity="top|start"
+            android:contentDescription="@string/help_button_desc"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="0dp"
+            app:cornerRadius="22dp"
+            app:icon="@drawable/ic_info"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
             app:iconSize="22dp"
@@ -392,6 +407,16 @@
                         android:text="@string/pc_waiting"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/pc_hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/pc_hint"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorError"
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <View
@@ -447,6 +472,40 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/history_clear" />
+                </LinearLayout>
+
+                <!-- Save history toggle (off = no items stored, for privacy) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/history_save_title"
+                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/history_save_desc"
+                            android:textAppearance="?attr/textAppearanceBodySmall"
+                            android:textColor="?attr/colorOnSurfaceVariant" />
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/history_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
                 </LinearLayout>
 
                 <TextView

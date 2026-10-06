@@ -24,8 +24,9 @@
 
     <!-- PC connection -->
     <string name="pc_title">PC connection</string>
-    <string name="pc_connected_ago">Connected · %1$d s ago</string>
+    <string name="pc_connected_ago">Connection checked · %1$d s ago</string>
     <string name="pc_waiting">Waiting for the PC script…</string>
+    <string name="pc_hint">Make sure the latest adb_clipboard_sync.py is running on your PC</string>
 
     <!-- History -->
     <string name="history_title">Clipboard history</string>
@@ -34,6 +35,14 @@
     <string name="history_copy">Copy</string>
     <string name="history_delete">Delete</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="history_save_title">Save history</string>
+    <string name="history_save_desc">Keep synced items on this device. Turn off if you sync sensitive data such as passwords.</string>
+    <string name="history_disabled">Clipboard history is turned off</string>
+
+    <!-- Help -->
+    <string name="help_button_desc">How it works</string>
+    <string name="help_title">How it works</string>
+    <string name="help_message">AdbClipboard syncs your clipboard between this device and your PC over ADB.\n\n• PC to Android: copy something on your PC and it appears here automatically.\n• Android to PC: tap the floating bubble to send this device\'s clipboard to your PC.\n\nThe bubble: tap to sync, drag to move, pinch to resize, double-tap to hide. If you hide it, tap the notification to bring it back.\n\nKeep adb_clipboard_sync.py running on your PC, and update it to the latest version so the connection status keeps working.</string>
 
     <!-- Actions -->
     <string name="exit_app">Exit app</string>

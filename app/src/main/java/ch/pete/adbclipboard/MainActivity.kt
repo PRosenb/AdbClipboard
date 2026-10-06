@@ -44,8 +44,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bubbleSizeLabel: TextView
     private lateinit var pcStatusDot: View
     private lateinit var pcStatusText: TextView
+    private lateinit var pcHint: TextView
     private lateinit var historyList: LinearLayout
     private lateinit var historyEmpty: TextView
+    private lateinit var historySwitch: MaterialSwitch
+    private lateinit var historyClear: MaterialButton
 
     private val refreshHandler = Handler(Looper.getMainLooper())
     private val refreshRunnable = object : Runnable {
@@ -81,8 +84,11 @@ class MainActivity : AppCompatActivity() {
         bubbleSizeLabel = findViewById(R.id.bubble_size_label)
         pcStatusDot = findViewById(R.id.pc_status_dot)
         pcStatusText = findViewById(R.id.pc_status_text)
+        pcHint = findViewById(R.id.pc_hint)
         historyList = findViewById(R.id.history_list)
         historyEmpty = findViewById(R.id.history_empty)
+        historySwitch = findViewById(R.id.history_switch)
+        historyClear = findViewById(R.id.history_clear)
 
         overlayAction.setOnClickListener {
             val intent = Intent(
@@ -133,10 +139,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.exit_button).setOnClickListener { exitApp() }
-        findViewById<MaterialButton>(R.id.history_clear).setOnClickListener {
+        historyClear.setOnClickListener {
             ClipboardHistory.clear(this)
             renderHistory()
         }
+
+        historySwitch.setOnCheckedChangeListener { _, checked ->
+            ClipboardHistory.setEnabled(this, checked)
+            renderHistory()
+        }
+
+        findViewById<MaterialButton>(R.id.help_button).setOnClickListener { showHelp() }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             findViewById<View>(R.id.notification_row).visibility = GONE
@@ -246,6 +259,16 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.pc_waiting)
         }
+        // Remind the user to run the up-to-date script while we have no signal.
+        pcHint.visibility = if (connected) GONE else VISIBLE
+    }
+
+    private fun showHelp() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.help_title)
+            .setMessage(R.string.help_message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun setBubbleVisible(visible: Boolean) {
@@ -270,6 +293,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderHistory() {
         historyList.removeAllViews()
+
+        // Keep the switch in sync without re-entering the listener.
+        val enabled = ClipboardHistory.isEnabled(this)
+        historySwitch.setOnCheckedChangeListener(null)
+        historySwitch.isChecked = enabled
+        historySwitch.setOnCheckedChangeListener { _, checked ->
+            ClipboardHistory.setEnabled(this, checked)
+            renderHistory()
+        }
+        historyClear.isEnabled = enabled
+
+        if (!enabled) {
+            historyList.visibility = GONE
+            historyEmpty.text = getString(R.string.history_disabled)
+            historyEmpty.visibility = VISIBLE
+            return
+        }
+        historyList.visibility = VISIBLE
+        historyEmpty.text = getString(R.string.history_empty)
+
         val entries = ClipboardHistory.load(this)
         historyEmpty.visibility = if (entries.isEmpty()) VISIBLE else GONE
 
