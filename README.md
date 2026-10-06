@@ -33,6 +33,7 @@ developers who need clipboard sync in security-conscious environments.
 🕹️ **Quick Settings Tile** - Sync the clipboard right from the notification shade  
 🌗 **Dark/Light Theme** - Toggle between themes; your choice is remembered  
 🕘 **Clipboard History** - Browse, copy, or delete previously synced items on-device  
+🔒 **Optional History** - Turn history off entirely if you sync sensitive data such as passwords  
 💚 **PC Connection Indicator** - See at a glance whether the PC script is connected
 
 ### Floating Bubble Gestures
@@ -85,6 +86,9 @@ Google Play Store.
 
 ### Python Script Setup
 
+> **Note:** Recent app versions require the updated `adb_clipboard_sync.py`. If you already have an
+> older script, update it as well. Otherwise the app cannot show the PC connection status.
+
 1. **Download**: Get the [latest release](https://github.com/PRosenb/AdbClipboard/releases/latest)
 2. **Extract**: Uncompress the downloaded file to get the **AdbClipboard-x.y.z** folder
 
@@ -119,7 +123,8 @@ chmod +x ~/adb_clipboard_sync.py
    tile)
 
 The main screen shows live status for each permission, the PC connection (via a heartbeat the PC
-script writes), and your clipboard history.
+script writes), and your clipboard history. Tap the **info button** in the top-left corner for a
+short explanation of how the app and the floating window work at any time.
 
 ## Troubleshooting
 
