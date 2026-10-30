@@ -21,6 +21,7 @@ NO_CONNECTED_DEVICE_DELAY_DEFAULT = 60
 DEFAULT_TIMEOUT = 30
 ADB_CLIPBOARD_PACKAGE = 'ch.pete.adbclipboard'
 CLIPBOARD_FILE_PATH = f'/sdcard/Android/data/{ADB_CLIPBOARD_PACKAGE}/files/clipboard.txt'
+HEARTBEAT_FILE_PATH = f'/sdcard/Android/data/{ADB_CLIPBOARD_PACKAGE}/files/heartbeat'
 
 
 class ResponseStatus(Enum):
@@ -210,6 +211,12 @@ class AdbManager:
         
         return Response(ResponseStatus.SUCCESS, content)
     
+    def heartbeat(self, device_hash: str) -> None:
+        """Touch the heartbeat file so the app can show the PC as connected"""
+        self.run_adb_command([
+            '-s', device_hash, 'shell', 'touch', HEARTBEAT_FILE_PATH
+        ], timeout=10, context=f"heartbeat {device_hash}")
+
     def _cleanup_device_file(self, device_hash: str) -> None:
         """Remove clipboard file from device after reading"""
         result = self.run_adb_command([
@@ -328,7 +335,11 @@ class ClipboardSyncManager:
                 if not devices:
                     self._handle_no_devices()
                     continue
-                
+
+                # Let the app know the PC is connected (refreshed every loop)
+                for device in devices:
+                    self.adb_manager.heartbeat(device)
+
                 if self._sync_clipboard_to_devices(devices):
                     continue
                 

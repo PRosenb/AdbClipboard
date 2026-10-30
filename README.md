@@ -26,7 +26,28 @@ developers who need clipboard sync in security-conscious environments.
 ⚡ **Auto PC-to-Android** - Automatically syncs PC clipboard changes to your device  
 🎯 **Manual Android-to-PC** - Tap the floating window to sync Android clipboard to PC  
 📱 **Overlay Permission** - Uses display overlay to access clipboard when needed  
-🌐 **Multiple Connections** - Supports both USB and WiFi connections
+🌐 **Multiple Connections** - Supports both USB and WiFi connections  
+🎨 **Material UI** - Material 3 design with live permission and connection status  
+🫧 **Floating Bubble** - Gesture-driven bubble: tap to sync, drag to move, pinch to resize  
+⚙️ **Bubble Size Slider** - Adjust the bubble size (36-160dp) from the app  
+🕹️ **Quick Settings Tile** - Sync the clipboard right from the notification shade  
+🌗 **Dark/Light Theme** - Toggle between themes; your choice is remembered  
+🕘 **Clipboard History** - Browse, copy, or delete previously synced items on-device  
+🔒 **Optional History** - Turn history off entirely if you sync sensitive data such as passwords  
+💚 **PC Connection Indicator** - See at a glance whether the PC script is connected
+
+### Floating Bubble Gestures
+
+| Gesture | Action |
+|---|---|
+| **Tap** | Sync Android clipboard to PC |
+| **Drag** | Move the bubble (snaps to the nearest edge) |
+| **Pinch** | Resize the bubble (36-160dp) |
+| **Double-tap** | Hide the bubble (a notification offers a one-tap restore) |
+| **Fling / drag off-screen** | Dismiss the bubble |
+
+If the bubble is hidden by any method, a notification appears so you can always bring it back with
+one tap.
 
 ## How It Works
 
@@ -60,9 +81,13 @@ Google Play Store.
 **Required Permissions:**
 
 - Display over other apps (for floating window)
+- Notifications (to restore a hidden bubble)
 - ADB debugging enabled on your device
 
 ### Python Script Setup
+
+> **Note:** Recent app versions require the updated `adb_clipboard_sync.py`. If you already have an
+> older script, update it as well. Otherwise the app cannot show the PC connection status.
 
 1. **Download**: Get the [latest release](https://github.com/PRosenb/AdbClipboard/releases/latest)
 2. **Extract**: Uncompress the downloaded file to get the **AdbClipboard-x.y.z** folder
@@ -94,7 +119,12 @@ chmod +x ~/adb_clipboard_sync.py
 3. Enable the floating window permission for AdbClipboard (if not already enabled)
 4. Start the AdbClipboard app to display the floating window
 5. Copy text on your PC - it automatically appears on Android
-6. To copy from Android to PC, tap the AdbClipboard floating window
+6. To copy from Android to PC, tap the AdbClipboard floating window (or use the Quick Settings
+   tile)
+
+The main screen shows live status for each permission, the PC connection (via a heartbeat the PC
+script writes), and your clipboard history. Tap the **info button** in the top-left corner for a
+short explanation of how the app and the floating window work at any time.
 
 ## Troubleshooting
 

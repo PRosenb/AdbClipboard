@@ -8,6 +8,7 @@
     android:padding="8dp">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/bubble_card"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:background="@android:color/white"

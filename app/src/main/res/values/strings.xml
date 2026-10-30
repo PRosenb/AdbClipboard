@@ -1,31 +1,56 @@
 <resources>
     <string name="app_name">ADB Clipboard</string>
-    <string name="explanation">AdbClipboard - Secure Clipboard Sync for Developers
-\n
-\nThis app enables clipboard synchronization between your Android device and PC using ADB - no external servers required.
-\n
-\n🔄 Automatic sync: PC → Android (via Python script)
-\n📱 Manual sync: Android → PC (tap floating window)
-\n
-\n📋 Full setup guide &amp; downloads:
-\ngithub.com/PRosenb/AdbClipboard
-\n
-\n⚡ Quick start:
-\n1. Visit the GitHub repository above
-\n2. Download and run the Python script
-\n3. Enable "Display over other apps" permission
-\n4. Start syncing!
-\n
-\n💡 TIP: No need to keep this screen open. The app runs in the background and shows a floating window.
-\n
-\nPerfect for developers in restricted environments where external clipboard services are blocked.
-\n
-\n🔧 Buttons explained:
-\n• "Enable overlay permission" - Appears if permission not yet granted. Tap to open Android settings, then find AdbClipboard in the list and toggle the permission on.
-\n• "Hide info" - Closes this screen but keeps the floating window active
-\n• "Exit app" - Completely closes AdbClipboard including the floating window</string>
+    <string name="app_subtitle">Secure clipboard sync over ADB</string>
+
+    <!-- Permission status -->
+    <string name="status_granted">Granted</string>
+    <string name="status_not_granted">Not granted</string>
+    <string name="permission_overlay_title">Display over other apps</string>
+    <string name="permission_overlay_desc">Shows the floating bubble over other apps</string>
+    <string name="permission_notification_title">Notifications</string>
+    <string name="permission_notification_desc">Shows the bubble recovery notification</string>
+    <string name="permission_enable">Enable</string>
+    <string name="bubble_overlay_hint">Enable "Display over other apps" to use the floating bubble</string>
+
+    <!-- Bubble -->
+    <string name="bubble_title">Floating bubble</string>
+    <string name="bubble_desc">Tap to sync · drag to move · double-tap to hide</string>
+    <string name="bubble_size_title">Bubble size</string>
+    <string name="bubble_size_value">%1$d dp</string>
+
+    <!-- Theme -->
+    <string name="theme_toggle_to_dark">Switch to dark mode</string>
+    <string name="theme_toggle_to_light">Switch to light mode</string>
+
+    <!-- PC connection -->
+    <string name="pc_title">PC connection</string>
+    <string name="pc_connected_ago">Connection checked · %1$d s ago</string>
+    <string name="pc_waiting">Waiting for the PC script…</string>
+    <string name="pc_hint">Make sure the latest adb_clipboard_sync.py is running on your PC</string>
+
+    <!-- History -->
+    <string name="history_title">Clipboard history</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_empty">No entries yet — synced items will appear here</string>
+    <string name="history_copy">Copy</string>
+    <string name="history_delete">Delete</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="history_save_title">Save history</string>
+    <string name="history_save_desc">Keep synced items on this device. Turn off if you sync sensitive data such as passwords.</string>
+    <string name="history_disabled">Clipboard history is turned off</string>
+
+    <!-- Help -->
+    <string name="help_button_desc">How it works</string>
+    <string name="help_title">How it works</string>
+    <string name="help_message">AdbClipboard syncs your clipboard between this device and your PC over ADB.\n\n• PC to Android: copy something on your PC and it appears here automatically.\n• Android to PC: tap the floating bubble to send this device\'s clipboard to your PC.\n\nThe bubble: tap to sync, drag to move, pinch to resize, double-tap to hide. If you hide it, tap the notification to bring it back.\n\nKeep adb_clipboard_sync.py running on your PC, and update it to the latest version so the connection status keeps working.</string>
+
+    <!-- Actions -->
+    <string name="exit_app">Exit app</string>
+
+    <!-- Other -->
     <string name="reading_clipboard">Reading clipboard..</string>
-    <string name="request_permission">Enable overlay permission</string>
-    <string name="close_app">Exit app</string>
-    <string name="close_window">Hide info</string>
+    <string name="qs_tile_label">Sync clipboard</string>
+    <string name="bubble_notification_channel">Bubble control</string>
+    <string name="bubble_hidden_notification_title">Bubble hidden</string>
+    <string name="bubble_hidden_notification_text">Tap to show the floating bubble</string>
 </resources>
