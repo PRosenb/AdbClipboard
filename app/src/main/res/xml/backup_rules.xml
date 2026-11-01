@@ -3,4 +3,7 @@
     <exclude
         domain="file"
         path="clipboard_history.json" />
+    <exclude
+        domain="external"
+        path="clipboard.txt" />
 </full-backup-content>
