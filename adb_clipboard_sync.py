@@ -3,8 +3,10 @@
 
 import argparse
 import logging
+import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -49,17 +51,17 @@ class Config:
 
 class ClipboardHandler(ABC):
     """Abstract base class for platform-specific clipboard handlers"""
-    
+
     @abstractmethod
     def check_dependencies(self) -> bool:
         """Check if required dependencies are available"""
         pass
-    
+
     @abstractmethod
     def read_clipboard(self) -> str:
         """Read text from clipboard"""
         pass
-    
+
     @abstractmethod
     def write_clipboard(self, text: str) -> None:
         """Write text to clipboard"""
@@ -68,27 +70,27 @@ class ClipboardHandler(ABC):
 
 class CommandRunner:
     """Centralized command runner with consistent error handling"""
-    
+
     def __init__(self, logger: logging.Logger):
         self.logger = logger
-    
-    def run_command(self, cmd: List[str], timeout: int = DEFAULT_TIMEOUT, 
+
+    def run_command(self, cmd: List[str], timeout: int = DEFAULT_TIMEOUT,
                    input_text: Optional[str] = None, context: str = "command") -> Optional[subprocess.CompletedProcess]:
         """
         Run external command with consistent error handling
-        
+
         Args:
             cmd: List of command arguments
             timeout: Timeout in seconds
             input_text: Text to send to stdin
             context: Description for logging
-            
+
         Returns:
             CompletedProcess object or None if failed
         """
         try:
             self.logger.debug(f"Running {context}: {' '.join(cmd)}")
-            
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -96,15 +98,15 @@ class CommandRunner:
                 timeout=timeout,
                 input=input_text
             )
-            
+
             # Only log warnings for actual errors, not expected failures
             if result.returncode != 0 and not self._is_expected_failure(context, result):
                 self.logger.warning(f"{context} failed with return code: {result.returncode}")
                 if result.stderr:
                     self.logger.warning(f"Error output: {result.stderr.strip()}")
-            
+
             return result
-            
+
         except FileNotFoundError:
             self.logger.error(f"{context} not found: {cmd[0]}")
             return None
@@ -114,7 +116,7 @@ class CommandRunner:
         except Exception as e:
             self.logger.error(f"Error running {context}: {e}")
             return None
-    
+
     def _is_expected_failure(self, context: str, result: subprocess.CompletedProcess) -> bool:
         """Check if a command failure is expected and should not be logged as warning"""
         # Reading clipboard file when it doesn't exist is expected
@@ -125,18 +127,39 @@ class CommandRunner:
 
 class AdbManager:
     """Manager for ADB operations"""
-    
+
     def __init__(self, command_runner: CommandRunner, logger: logging.Logger, config: Config):
         self.runner = command_runner
         self.logger = logger
         self.config = config
-    
-    def run_adb_command(self, args: List[str], timeout: int = DEFAULT_TIMEOUT, 
-                       input_text: Optional[str] = None, context: str = "adb command") -> Optional[subprocess.CompletedProcess]:
-        """Run ADB command"""
-        cmd = ['adb'] + args
+
+    def run_adb_command(self, args: List[str], timeout: int = DEFAULT_TIMEOUT,
+                        input_text: Optional[str] = None, context: str = "adb command") -> Optional[
+        subprocess.CompletedProcess]:
+        """Run ADB command, falling back to local directory if not in PATH"""
+
+        # 1. Check if 'adb' is globally available in the system PATH
+        adb_path = shutil.which('adb')
+
+        # 2. If not found in PATH, look for it in the current script's directory
+        if not adb_path:
+            # Get the directory of the currently running script
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+
+            # Account for Windows (adb.exe) vs Mac/Linux (adb)
+            exec_name = 'adb.exe' if os.name == 'nt' else 'adb'
+            local_adb = os.path.join(script_dir, exec_name)
+
+            # If it exists locally, use the absolute path
+            if os.path.exists(local_adb):
+                adb_path = local_adb
+            else:
+                # Fallback to default string if completely missing (will raise default error)
+                adb_path = 'adb'
+
+        cmd = [adb_path] + args
         return self.runner.run_command(cmd, timeout, input_text, context)
-    
+
     def check_dependency(self) -> bool:
         """Check if ADB is available"""
         result = self.run_adb_command(['version'], timeout=10, context="adb dependency check")
